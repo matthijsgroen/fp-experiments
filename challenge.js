@@ -4,7 +4,7 @@ const data = `
   "goal": [
     "create a function that takes one argument
 that is a path into this JSON struct",
-    "get(\\"using.disallowed.0\\") should result in \\"No dependencies\\""
+    "get(data)(\\"using.disallowed.0\\") should result in \\"No dependencies\\""
   ],
   "using": {
     "allowed": [
@@ -240,4 +240,12 @@ const jsonParser = stream =>
         : result
   );
 
-console.log(jsonParser(data));
+const pathCharParser = toString(many1(satisfy(c => c !== ".")));
+const split = sepBy(characterParser("."))(pathCharParser);
+
+const get = data => path =>
+  doReduce(result => item => result && result[item])(data)(split(path)[0]);
+
+const jsonStruct = jsonParser(data);
+
+console.log(get(jsonStruct)("using.disallowed.0"));

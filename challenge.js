@@ -18,20 +18,24 @@ that is a path into this JSON struct",
       "No JSON.parse",
       "Usage of 'if'",
       "Usage of for/while loops",
-      "No other host language functions",
+      "No host language functions, except type casting (no .split, .map, .reduce, etc)",
       "Multiple statements in a lambda"
     ]
   },
   "hints": [
     "Think about function composition and currying",
     "Think about parser combinators",
-    "https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/"
+    "https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/",
+    "Use a Y combinator",
+    "https://blog.klipse.tech/lambda/2016/08/10/pure-y-combinator-javascript.html"
   ],
   "points": {
+    "not-trying": 0,
     "started": 5,
-    "full-json": 1e3
+    "full-json": 1e3,
+    "without-recursion": 1e4
   },
-  "jsonTypes": [null, true, false, 12]
+  "jsonTypes": [null, true, false, -0.12]
 }
 `;
 
@@ -40,26 +44,37 @@ that is a path into this JSON struct",
  * no function usage of the host language
  *
  * const ast = JSON.parse(data);
- * const get = path =>
+ * const get = ast => path =>
  *   path.split(".").reduce((item, term) => item && item[term], ast);
- * console.log(get("using.disallowed.0"));
+ * console.log(get(ast)("using.disallowed.0"));
  *
  */
 
-// Parser signagure: String => [Boolean, String]
+// helper utilities
+
+const Y = f => (x => x(x))(x => f(y => x(x)(y)));
+
+const applyMap = transform => f => ([head, ...tail]) =>
+  head ? [transform(head), ...f(tail)] : [];
+
+const map = transform => Y(applyMap(transform));
+
+const applyReduce = reducer => f => start => ([head, ...tail]) =>
+  head ? f(reducer(start)(head))(tail) : start;
+
+const reduce = reducer => ([head, ...tail]) =>
+  Y(applyReduce(reducer))(head)(tail);
+
+const reduceWithStart = reducer => head => tail =>
+  Y(applyReduce(reducer))(head)(tail);
+
+const concat = list1 => list2 => [...list1, ...list2];
+
+// Parser signagure:
+// String => [result: any, remaining: string] | [FAILED, errorType: string, conflict: string]
 const PARSED = 0;
 const REMAINING = 1;
 const FAILED = Symbol("Failed");
-
-const map = transform => ([head, ...tail]) =>
-  head ? [transform(head), ...map(transform)(tail)] : [];
-
-const doReduce = reducer => start => ([head, ...tail]) =>
-  head ? doReduce(reducer)(reducer(start)(head))(tail) : start;
-
-const reduce = reducer => ([head, ...tail]) => doReduce(reducer)(head)(tail);
-
-const concat = list1 => list2 => [...list1, ...list2];
 
 const satisfy = predicate => ([head, ...tail]) =>
   head
@@ -112,10 +127,12 @@ const stringToChars = ([head, ...tail]) =>
 const anyOf = string => choice(map(characterParser)(stringToChars(string)));
 const sequence = string => chain(map(characterParser)(stringToChars(string)));
 const toList = mapResult(result => concat([result[0]])(result[1]));
-const many = parser => stream =>
-  orElse(toList(andThen(parser)(many(parser))))(returnResult([]))(stream);
 
-const many1 = parser => toList(andThen(parser)(many(parser)));
+const applyMany = parser => f => stream =>
+  orElse(toList(andThen(parser)(f)))(returnResult([]))(stream);
+const many = parser => Y(applyMany(parser));
+
+const some = parser => toList(andThen(parser)(many(parser)));
 const opt = parser => orElse(parser)(returnResult([]));
 
 const andThenLeft = parserA => parserB =>
@@ -133,14 +150,22 @@ const sepBy1 = sepParser => parser =>
 const sepBy = sepParser => parser =>
   orElse(sepBy1(sepParser)(parser))(returnResult([]));
 
-const add = a => b => a + b;
-const join = a => b => [...a, b];
-const toString = mapResult(result => reduce(add)(result));
+const toString = mapResult(result => reduce(a => b => a + b)(result));
 const stringParser = string => addLabel(string)(sequence(string));
 
 const parseStringResult = string => result =>
   andThenRight(stringParser(string))(returnResult(result));
 
+const forwardReference = (impl = () => [FAILED, "Unforfilled"]) => [
+  stream => impl(stream),
+  update => (impl = update)
+];
+
+// Building the parser
+
+const [valueParser, updateValueParserRef] = forwardReference();
+
+const whitespaceParser = many(anyOf(" \n\t"));
 const nullParser = parseStringResult("null")(null);
 const boolParser = addLabel("boolean")(
   orElse(parseStringResult("true")(true))(parseStringResult("false")(false))
@@ -160,7 +185,6 @@ const specialCharacters = [
 const escapedCharParser = choice(
   map(([match, result]) => parseStringResult(match)(result))(specialCharacters)
 );
-
 const quoteParser = characterParser('"');
 const quotedStringParser = addLabel("string")(
   toString(
@@ -170,18 +194,8 @@ const quotedStringParser = addLabel("string")(
   )
 );
 
-const forwardReference = (impl = () => [FAILED, "Unforfilled"]) => [
-  stream => impl(stream),
-  update => (impl = update)
-];
-
-const [valueParser, updateValueParserRef] = forwardReference();
-
-const whitespace = " \n\t";
-const whitespaceParser = many(anyOf(whitespace));
-
 const optSign = opt(characterParser("-"));
-const zero = stringParser("0");
+const zero = characterParser("0");
 const digitOneNine = anyOf("123456789");
 const digit = anyOf("0123456789");
 const point = characterParser(".");
@@ -190,8 +204,8 @@ const optPlusMinus = opt(anyOf("+-"));
 
 const nonZeroInt = toString(andThen(digitOneNine)(toString(many(digit))));
 const intPart = orElse(nonZeroInt)(zero);
-const fractionPart = toString(andThen(point)(toString(many1(digit))));
-const exponentPart = toString(chain([e, optPlusMinus, toString(many1(digit))]));
+const fractionPart = toString(andThen(point)(toString(some(digit))));
+const exponentPart = toString(chain([e, optPlusMinus, toString(some(digit))]));
 const numberParser = addLabel("number")(
   mapResult(result => Number(result))(
     toString(chain([optSign, intPart, opt(fractionPart), opt(exponentPart)]))
@@ -218,7 +232,7 @@ const objectKeyValue = andThen(andThenLeft(objectKey)(objectKeyValSep))(
   objectValue
 );
 const objectParser = mapResult(
-  doReduce(result => ([key, value]) => ({ ...result, [key]: value }))({})
+  reduceWithStart(result => ([key, value]) => ({ ...result, [key]: value }))({})
 )(between(objectStart)(objectEnd)(sepBy(objectPairSep)(objectKeyValue)));
 
 updateValueParserRef(
@@ -240,12 +254,15 @@ const jsonParser = stream =>
         : result
   );
 
-const pathCharParser = toString(many1(satisfy(c => c !== ".")));
+// Get function
+
+const pathCharParser = toString(some(satisfy(c => c !== ".")));
 const split = sepBy(characterParser("."))(pathCharParser);
 
 const get = data => path =>
-  doReduce(result => item => result && result[item])(data)(split(path)[0]);
+  reduceWithStart(result => item => result && result[item])(data)(
+    split(path)[0]
+  );
 
 const jsonStruct = jsonParser(data);
-
 console.log(get(jsonStruct)("using.disallowed.0"));

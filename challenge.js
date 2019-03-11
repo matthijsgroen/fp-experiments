@@ -18,7 +18,7 @@ that is a path into this JSON struct",
       "No JSON.parse",
       "Usage of 'if'",
       "Usage of for/while loops",
-      "No other host language functions except concat",
+      "No other host language functions",
       "Multiple statements in a lambda"
     ]
   },
@@ -29,7 +29,7 @@ that is a path into this JSON struct",
   ],
   "points": {
     "started": 5,
-    "full-json": 10
+    "full-json": 1e3
   },
   "jsonTypes": [null, true, false, 12]
 }
@@ -59,10 +59,7 @@ const doReduce = reducer => start => ([head, ...tail]) =>
 
 const reduce = reducer => ([head, ...tail]) => doReduce(reducer)(head)(tail);
 
-console.log(
-  reduce(result => elem => result + elem)(map(x => x + 1)([1, 2, 3]))
-);
-console.log(map(x => x + 1)([1, 2, 3]));
+const concat = list1 => list2 => [...list1, ...list2];
 
 const satisfy = predicate => ([head, ...tail]) =>
   head
@@ -108,13 +105,13 @@ const orElse = parserA => parserB => stream =>
   onFailure(parserA(stream))(() => parserB(stream));
 
 const choice = reduce(orElse);
-const chain = reduce(andThen);
+const chain = reduce(a => b => mapResult(([a, b]) => [...a, b])(andThen(a)(b)));
 
 const stringToChars = ([head, ...tail]) =>
-  head ? [head].concat(stringToChars(tail)) : [];
+  head ? concat([head])(stringToChars(tail)) : [];
 const anyOf = string => choice(map(characterParser)(stringToChars(string)));
 const sequence = string => chain(map(characterParser)(stringToChars(string)));
-const toList = mapResult(result => [result[0]].concat(result[1]));
+const toList = mapResult(result => concat([result[0]])(result[1]));
 const many = parser => stream =>
   orElse(toList(andThen(parser)(many(parser))))(returnResult([]))(stream);
 
@@ -127,23 +124,19 @@ const andThenLeft = parserA => parserB =>
 const andThenRight = parserA => parserB =>
   mapResult(result => result[1])(andThen(parserA)(parserB));
 
-const between = parserA => parserB => parserC =>
+const between = parserA => parserC => parserB =>
   andThenLeft(andThenRight(parserA)(parserB))(parserC);
 
-const sepBy1 = parser => sepParser =>
+const sepBy1 = sepParser => parser =>
   toList(andThen(parser)(many(andThenRight(sepParser)(parser))));
 
-const sepBy = parser => sepParser =>
-  orElse(sepBy1(parser)(sepParser))(returnResult([]));
+const sepBy = sepParser => parser =>
+  orElse(sepBy1(sepParser)(parser))(returnResult([]));
 
-const toString = mapResult(result =>
-  reduce(str => char => str + char)(result[0].concat(result[1]))
-);
+const add = a => b => a + b;
+const join = a => b => [...a, b];
+const toString = mapResult(result => reduce(add)(result));
 const stringParser = string => addLabel(string)(sequence(string));
-
-const toNumber = mapResult(([sign, digits]) =>
-  Number(reduce(str => char => str + char)([sign].concat(digits)))
-);
 
 const parseStringResult = string => result =>
   andThenRight(stringParser(string))(returnResult(result));
@@ -168,24 +161,83 @@ const escapedCharParser = choice(
   map(([match, result]) => parseStringResult(match)(result))(specialCharacters)
 );
 
-//console.log(escapedCharParser("\\\\"));
-console.log(escapedCharParser("\\n"));
-console.log(escapedCharParser("g"));
-
-console.log(nullParser("null"));
-console.log(nullParser("nul"));
-console.log(boolParser("true"));
-console.log(boolParser("tue"));
-console.log(boolParser("false"));
-
-const digits = "01234567890";
-const integerParser = toNumber(
-  andThen(opt(characterParser("-")))(many1(anyOf(digits)))
+const quoteParser = characterParser('"');
+const quotedStringParser = addLabel("string")(
+  toString(
+    between(quoteParser)(quoteParser)(
+      many(orElse(stringCharParser)(escapedCharParser))
+    )
+  )
 );
-console.log(integerParser("12312321"));
 
-/*
+const forwardReference = (impl = () => [FAILED, "Unforfilled"]) => [
+  stream => impl(stream),
+  update => (impl = update)
+];
+
+const [valueParser, updateValueParserRef] = forwardReference();
 
 const whitespace = " \n\t";
-const whitespaceParser = many1(anyOf(whitespace));
-*/
+const whitespaceParser = many(anyOf(whitespace));
+
+const optSign = opt(characterParser("-"));
+const zero = stringParser("0");
+const digitOneNine = anyOf("123456789");
+const digit = anyOf("0123456789");
+const point = characterParser(".");
+const e = anyOf("eE");
+const optPlusMinus = opt(anyOf("+-"));
+
+const nonZeroInt = toString(andThen(digitOneNine)(toString(many(digit))));
+const intPart = orElse(nonZeroInt)(zero);
+const fractionPart = toString(andThen(point)(toString(many1(digit))));
+const exponentPart = toString(chain([e, optPlusMinus, toString(many1(digit))]));
+const numberParser = addLabel("number")(
+  mapResult(result => Number(result))(
+    toString(chain([optSign, intPart, opt(fractionPart), opt(exponentPart)]))
+  )
+);
+
+const ignoreTrailingSpaces = parser => andThenLeft(parser)(whitespaceParser);
+const arrayStart = ignoreTrailingSpaces(characterParser("["));
+const arrayEnd = ignoreTrailingSpaces(characterParser("]"));
+const arraySep = ignoreTrailingSpaces(characterParser(","));
+const arrayValue = ignoreTrailingSpaces(valueParser);
+const arrayValues = sepBy(arraySep)(arrayValue);
+const arrayParser = addLabel("array")(
+  between(arrayStart)(arrayEnd)(arrayValues)
+);
+
+const objectStart = ignoreTrailingSpaces(characterParser("{"));
+const objectEnd = ignoreTrailingSpaces(characterParser("}"));
+const objectPairSep = ignoreTrailingSpaces(characterParser(","));
+const objectKeyValSep = ignoreTrailingSpaces(characterParser(":"));
+const objectKey = ignoreTrailingSpaces(quotedStringParser);
+const objectValue = ignoreTrailingSpaces(valueParser);
+const objectKeyValue = andThen(andThenLeft(objectKey)(objectKeyValSep))(
+  objectValue
+);
+const objectParser = mapResult(
+  doReduce(result => ([key, value]) => ({ ...result, [key]: value }))({})
+)(between(objectStart)(objectEnd)(sepBy(objectPairSep)(objectKeyValue)));
+
+updateValueParserRef(
+  choice([
+    nullParser,
+    boolParser,
+    numberParser,
+    quotedStringParser,
+    arrayParser,
+    objectParser
+  ])
+);
+
+const jsonParser = stream =>
+  onSuccess(andThenRight(whitespaceParser)(valueParser)(stream))(
+    ([result, remaining]) =>
+      remaining.length > 0
+        ? [FAILED, "Unexpected characters:", remaining]
+        : result
+  );
+
+console.log(jsonParser(data));

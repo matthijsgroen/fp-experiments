@@ -165,6 +165,8 @@ const data = `
  */
 ```
 
+Would I be able to create purely functional code to parse the JSON defined?
+
 Yes, I even added a `Recursion to own function` in there, after watching
 ["The next great functional programming language"](https://www.youtube.com/watch?v=buQNgW-voAg)
 just to see if it would really be possible.
@@ -174,6 +176,80 @@ exercise of following along and implementing it in Javascript, and trying to
 apply a few more rules along the way. (I was wrong!)
 
 I never knew I would learn so much in a few days...
+
+# Challenge Part 1, starting the parser
+
+If I would be able to complete this challenge, I would also want to share this challenge with colleagues, maybe they wanted to do it as well as learning exercise. So I wanted to add some cheat prevention as well, using eslint.
+
+> eslint is a linting tool voor ecmascript, where you can define your own rules of what you consider to be "good" code.
+
+So in the folder where I created my `challenge.js` file, I added:
+
+```sh
+git init .
+yarn init
+yarn add eslint --dev
+```
+
+Now I added eslint, I could add custom rules, by updating my just generated `package.json` file:
+
+```json
+{
+  "name": "json-parse-fp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Matthijs Groen <matthijs@kabisa.nl>",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.15.1"
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 2018
+    },
+    "extends": "eslint:recommended",
+
+    "env": {},
+    "extends": "eslint:recommended"
+  }
+}
+```
+
+By not specifying an `env` I was restricting a lot of standard JS. But in this case, even too much, so I added a rule to allow some globals. And since I would not use `export` constructs in this file, I would want to use `console.log` for outputting some results.
+
+```json
+{
+  "eslintConfig": {
+    "globals": {
+      "Symbol": "readonly",
+      "Array": "readonly",
+      "String": "readonly",
+      "Number": "readonly",
+      "console": "readonly"
+    },
+    "rules": {
+      "no-console": ["off"]
+    }
+  }
+}
+```
+
+The editor I'm using would directly apply these rules, so I would have
+direct feedback whether I was breaking any rules.
+
+I even added some more rules, to prevent cheating:
+
+```json
+{
+  "eslintConfig": {
+    "rules": {
+      "no-use-before-define": ["error", { "functions": true, "classes": true }],
+      "no-eval": ["error"],
+      "no-implied-eval": ["error"],
+      "no-restricted-globals": ["error", "JSON"],
+  }
+}
+```
 
 - Explain challenge I made for myself, in JS
 - Explain no-restricted-syntax

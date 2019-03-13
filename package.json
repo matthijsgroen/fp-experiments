@@ -8,29 +8,26 @@
     "eslint": "^5.15.1"
   },
   "eslintConfig": {
-    "env": {},
+    "parserOptions": {
+      "ecmaVersion": 2018
+    },
     "extends": "eslint:recommended",
+    "env": {},
     "globals": {
       "Symbol": "readonly",
       "Array": "readonly",
       "String": "readonly",
+      "Number": "readonly",
       "console": "readonly"
-    },
-    "parserOptions": {
-      "ecmaVersion": 2018
     },
     "rules": {
       "no-console": ["off"],
       "no-use-before-define": ["error", { "functions": true, "classes": true }],
-      "max-lines": [
-        "error",
-        { "max": 300, "skipBlankLines": true, "skipComments": true }
-      ],
       "no-eval": ["error"],
       "no-implied-eval": ["error"],
+      "no-restricted-globals": ["error", "JSON"],
       "max-statements": ["error", 1, { "ignoreTopLevelFunctions": false }],
       "complexity": ["error", { "max": 3 }],
-      "no-restricted-globals": ["error", "JSON"],
       "arrow-body-style": ["error", "as-needed"],
       "no-restricted-syntax": [
         "error",

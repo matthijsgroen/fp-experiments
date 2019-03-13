@@ -42,7 +42,6 @@
           "selector": "ArrowFunctionExpression[params.length > 1]",
           "message": "Only 1 argument allowed. Please use currying"
         },
-
         {
           "selector": "IfStatement",
           "message": "Try using ternary operator: true ? 1 : 2"

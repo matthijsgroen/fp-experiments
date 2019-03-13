@@ -157,17 +157,7 @@ const stringParser = string => addLabel(string)(sequence(string));
 const parseStringResult = string => result =>
   andThenRight(stringParser(string))(returnResult(result));
 
-/*
-const forwardReference = () =>
-  (impl => [stream => impl(stream), update => (impl = update)])(() => [
-    FAILED,
-    "Unfulfilled"
-  ]);
-
 // Building the parser
-
-const [valueParser, updateValueParserRef] = forwardReference();
-*/
 
 const whitespaceParser = many(anyOf(" \n\t"));
 const nullParser = parseStringResult("null")(null);
@@ -220,8 +210,8 @@ const ignoreTrailingSpaces = parser => andThenLeft(parser)(whitespaceParser);
 const arrayStart = ignoreTrailingSpaces(characterParser("["));
 const arrayEnd = ignoreTrailingSpaces(characterParser("]"));
 const arraySep = ignoreTrailingSpaces(characterParser(","));
-const arrayValue = valueParser => ignoreTrailingSpaces(valueParser);
-const arrayValues = valueParser => sepBy(arraySep)(arrayValue(valueParser));
+const arrayValues = valueParser =>
+  sepBy(arraySep)(ignoreTrailingSpaces(valueParser));
 const arrayParser = valueParser =>
   addLabel("array")(between(arrayStart)(arrayEnd)(arrayValues(valueParser)));
 
@@ -230,9 +220,10 @@ const objectEnd = ignoreTrailingSpaces(characterParser("}"));
 const objectPairSep = ignoreTrailingSpaces(characterParser(","));
 const objectKeyValSep = ignoreTrailingSpaces(characterParser(":"));
 const objectKey = ignoreTrailingSpaces(quotedStringParser);
-const objectValue = valueParser => ignoreTrailingSpaces(valueParser);
 const objectKeyValue = valueParser =>
-  andThen(andThenLeft(objectKey)(objectKeyValSep))(objectValue(valueParser));
+  andThen(andThenLeft(objectKey)(objectKeyValSep))(
+    ignoreTrailingSpaces(valueParser)
+  );
 const objectParser = valueParser =>
   mapResult(
     reduceWithStart(result => ([key, value]) => ({ ...result, [key]: value }))(
@@ -276,3 +267,5 @@ const get = data => path =>
 
 const jsonStruct = jsonParser(data);
 console.log(get(jsonStruct)("using.disallowed.0"));
+console.log(get(jsonStruct)("points.full-json"));
+console.log(get(jsonStruct)("jsonTypes.2"));

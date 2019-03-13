@@ -2,23 +2,24 @@ const data = `
 {
   "name": "Functional programming challenge",
   "goal": [
-    "create a function that takes one argument
-that is a path into this JSON struct",
-    "get(data)(\\"using.disallowed.0\\") should result in \\"No dependencies\\""
+    "create a function that takes one argument that is a path into this JSON struct",
+    "get(data)(\\"using.disallowed.0\\") should result in \\"No dependencies\\"",
+    "get(data)(\\"points.full-json.\\") should result in 1000",
+    "get(data)(\\"jsonTypes.2\\") should result in false"
   ],
   "using": {
     "allowed": [
       "Only code in this file",
       "Only functions that take one argument",
-      "Ternary operator true ? a : b",
-      "Recursion"
+      "Ternary operator true ? a : b"
     ],
     "disallowed": [
       "No dependencies",
+      "Recursion to own function",
       "No JSON.parse",
       "Usage of 'if'",
       "Usage of for/while loops",
-      "No host language functions, except type casting (no .split, .map, .reduce, etc)",
+      "No host object functions (.split, .map, .reduce, etc)",
       "Multiple statements in a lambda"
     ]
   },
@@ -27,7 +28,7 @@ that is a path into this JSON struct",
     "Think about parser combinators",
     "https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/",
     "Use a Y combinator",
-    "https://blog.klipse.tech/lambda/2016/08/10/pure-y-combinator-javascript.html"
+    "https://blog.klipse.tech/lambda/2016/08/10/almost-y-combinator-javascript.html"
   ],
   "points": {
     "not-trying": 0,
@@ -156,14 +157,17 @@ const stringParser = string => addLabel(string)(sequence(string));
 const parseStringResult = string => result =>
   andThenRight(stringParser(string))(returnResult(result));
 
-const forwardReference = (impl = () => [FAILED, "Unforfilled"]) => [
-  stream => impl(stream),
-  update => (impl = update)
-];
+/*
+const forwardReference = () =>
+  (impl => [stream => impl(stream), update => (impl = update)])(() => [
+    FAILED,
+    "Unfulfilled"
+  ]);
 
 // Building the parser
 
 const [valueParser, updateValueParserRef] = forwardReference();
+*/
 
 const whitespaceParser = many(anyOf(" \n\t"));
 const nullParser = parseStringResult("null")(null);
@@ -216,35 +220,41 @@ const ignoreTrailingSpaces = parser => andThenLeft(parser)(whitespaceParser);
 const arrayStart = ignoreTrailingSpaces(characterParser("["));
 const arrayEnd = ignoreTrailingSpaces(characterParser("]"));
 const arraySep = ignoreTrailingSpaces(characterParser(","));
-const arrayValue = ignoreTrailingSpaces(valueParser);
-const arrayValues = sepBy(arraySep)(arrayValue);
-const arrayParser = addLabel("array")(
-  between(arrayStart)(arrayEnd)(arrayValues)
-);
+const arrayValue = valueParser => ignoreTrailingSpaces(valueParser);
+const arrayValues = valueParser => sepBy(arraySep)(arrayValue(valueParser));
+const arrayParser = valueParser =>
+  addLabel("array")(between(arrayStart)(arrayEnd)(arrayValues(valueParser)));
 
 const objectStart = ignoreTrailingSpaces(characterParser("{"));
 const objectEnd = ignoreTrailingSpaces(characterParser("}"));
 const objectPairSep = ignoreTrailingSpaces(characterParser(","));
 const objectKeyValSep = ignoreTrailingSpaces(characterParser(":"));
 const objectKey = ignoreTrailingSpaces(quotedStringParser);
-const objectValue = ignoreTrailingSpaces(valueParser);
-const objectKeyValue = andThen(andThenLeft(objectKey)(objectKeyValSep))(
-  objectValue
-);
-const objectParser = mapResult(
-  reduceWithStart(result => ([key, value]) => ({ ...result, [key]: value }))({})
-)(between(objectStart)(objectEnd)(sepBy(objectPairSep)(objectKeyValue)));
+const objectValue = valueParser => ignoreTrailingSpaces(valueParser);
+const objectKeyValue = valueParser =>
+  andThen(andThenLeft(objectKey)(objectKeyValSep))(objectValue(valueParser));
+const objectParser = valueParser =>
+  mapResult(
+    reduceWithStart(result => ([key, value]) => ({ ...result, [key]: value }))(
+      {}
+    )
+  )(
+    between(objectStart)(objectEnd)(
+      sepBy(objectPairSep)(objectKeyValue(valueParser))
+    )
+  );
 
-updateValueParserRef(
+const applyValueParser = valueParser => stream =>
   choice([
     nullParser,
     boolParser,
     numberParser,
     quotedStringParser,
-    arrayParser,
-    objectParser
-  ])
-);
+    arrayParser(valueParser),
+    objectParser(valueParser)
+  ])(stream);
+
+const valueParser = stream => Y(applyValueParser)(stream);
 
 const jsonParser = stream =>
   onSuccess(andThenRight(whitespaceParser)(valueParser)(stream))(

@@ -1,0 +1,65 @@
+{
+  "name": "json-parse-fp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Matthijs Groen <matthijs@kabisa.nl>",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.15.1"
+  },
+  "eslintConfig": {
+    "env": {},
+    "extends": "eslint:recommended",
+    "globals": {
+      "Symbol": "readonly",
+      "Array": "readonly",
+      "String": "readonly",
+      "console": "readonly"
+    },
+    "parserOptions": {
+      "ecmaVersion": 2018
+    },
+    "rules": {
+      "no-console": ["off"],
+      "no-use-before-define": ["error", { "functions": true, "classes": true }],
+      "max-lines": [
+        "error",
+        { "max": 300, "skipBlankLines": true, "skipComments": true }
+      ],
+      "no-eval": ["error"],
+      "no-implied-eval": ["error"],
+      "max-statements": ["error", 1, { "ignoreTopLevelFunctions": false }],
+      "complexity": ["error", { "max": 3 }],
+      "no-restricted-globals": ["error", "JSON"],
+      "arrow-body-style": ["error", "as-needed"],
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "FunctionExpression",
+          "message": "Please use Lambda notation () =>"
+        },
+        {
+          "selector": "ArrowFunctionExpression[params.length > 1]",
+          "message": "Only 1 argument allowed. Please use currying"
+        },
+
+        {
+          "selector": "IfStatement",
+          "message": "Try using ternary operator: true ? 1 : 2"
+        },
+        {
+          "selector": "CallExpression[callee.type=MemberExpression][callee.property.name!='log']",
+          "message": "Not allowed to call object members, except console.log()"
+        },
+        {
+          "selector": "AssignmentPattern,AssignmentExpression",
+          "message": "State must be immutable"
+        },
+        {
+          "selector": "VariableDeclaration[kind=let],VariableDeclaration[kind=var]",
+          "message": "Only use constants"
+        }
+      ]
+    }
+  }
+}

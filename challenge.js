@@ -207,18 +207,19 @@ const numberParser = addLabel("number")(
 );
 
 const ignoreTrailingSpaces = parser => andThenLeft(parser)(whitespaceParser);
-const arrayStart = ignoreTrailingSpaces(characterParser("["));
-const arrayEnd = ignoreTrailingSpaces(characterParser("]"));
-const arraySep = ignoreTrailingSpaces(characterParser(","));
+const jsonChar = character => ignoreTrailingSpaces(characterParser(character));
+const arrayStart = jsonChar("[");
+const arrayEnd = jsonChar("]");
+const arraySep = jsonChar(",");
 const arrayValues = valueParser =>
   sepBy(arraySep)(ignoreTrailingSpaces(valueParser));
 const arrayParser = valueParser =>
   addLabel("array")(between(arrayStart)(arrayEnd)(arrayValues(valueParser)));
 
-const objectStart = ignoreTrailingSpaces(characterParser("{"));
-const objectEnd = ignoreTrailingSpaces(characterParser("}"));
-const objectPairSep = ignoreTrailingSpaces(characterParser(","));
-const objectKeyValSep = ignoreTrailingSpaces(characterParser(":"));
+const objectStart = jsonChar("{");
+const objectEnd = jsonChar("}");
+const objectPairSep = jsonChar(",");
+const objectKeyValSep = jsonChar(":");
 const objectKey = ignoreTrailingSpaces(quotedStringParser);
 const objectKeyValue = valueParser =>
   andThen(andThenLeft(objectKey)(objectKeyValSep))(

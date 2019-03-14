@@ -52,7 +52,7 @@ or this one:
       "error",
       {
         "selector": "CatchClause > :not(CallExpression[callee.name=\"logError\"])",
-        "message": "No Error reporting called in catch block"
+        "message": "Missing error reporting in catch block"
       }
     ]
   }

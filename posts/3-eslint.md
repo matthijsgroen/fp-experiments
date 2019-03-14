@@ -77,7 +77,7 @@ be done:
       },
       {
         "selector": "VariableDeclarator[id.name=/select.*/] > ArrowFunctionExpression[params.0.name!=\"state\"]",
-        "message": "First argument should be called state"
+        "message": "First argument of selector should be called state"
       }
     ]
   }

@@ -154,7 +154,8 @@ states it:
 > sequence of functions, each with a single argument.
 
 This would actually mean that our function would not be "data" in, "data" out
-like I was used to. It would be "data" in, "function" out.
+like I was used to. It would be "data" in, "function" out. Like a function
+factory.
 
 A Mathematic example:
 
@@ -190,6 +191,10 @@ console.log(aParser("aabc")); // [ 'a', [ 'a', 'b', 'c' ] ]
 console.log(aParser("bcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'b'" ]
 console.log(bParser("bcd")); // [ 'b', [ 'c', 'd' ] ]
 ```
+
+> On desktop browsers you can follow along by opening the console and pasting
+> the code in there. A `const` can only be declared once though, so you might
+> need to refresh sometime to replace a const.
 
 So now I could create a parser for any one character I would like. The next
 step, creating a parser to combinate others.
@@ -280,4 +285,4 @@ So now our eslint rules in total look like this:
 }
 ```
 
-In the next post we will actually start combining parsers!
+In the next post of this series we will actually start combining parsers!

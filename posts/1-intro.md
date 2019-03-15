@@ -153,9 +153,9 @@ I could replicate the concepts, but I did not understand them, or how it would
 help me write better software.
 
 I was intrigued by
-[a video about Parser Combinators](https://www.youtube.com/watch?v=RDalzi7mhdY),
-because I work and create DSLs in various projects. It looked like fun to build
-something like that for myself.
+[a video about Parser Combinators](https://www.youtube.com/watch?v=RDalzi7mhdY)
+by Scott Wlaschin, because I work and create DSLs in various projects. It looked
+like fun to build something like that for myself.
 
 So I decided to create a challenge for myself, to learn more about Functional
 Programming, and playing around with the concept of Parser Combinators.

@@ -58,8 +58,7 @@ const andThen = parserA => parserB => stream => parserA(stream);
 
 const abParser = andThen(aParser)(bParser);
 console.log(abParser(validData)); // ["a", ["b", "c", "d"]]
-console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing
-'a':", "Unexpected 'i'" ]
+console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
 console.log(abParser(invalidData2)); // ["a", ["b", "c", "d"]]
 ```
 
@@ -83,10 +82,8 @@ const andThen = parserA => parserB => stream =>
 
 const abParser = andThen(aParser)(bParser);
 console.log(abParser(validData)); // [ 'b', [ 'c', 'd' ] ]
-console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing
-'a':", "Unexpected 'i'" ]
-console.log(abParser(invalidData2)); // [ Symbol(Failed), "Error parsing
-'b':", "Unexpected 'i'" ]
+console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
+console.log(abParser(invalidData2)); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
 Ok the last 2 lines are as expected now. but the first one is incorrect. the
@@ -107,10 +104,8 @@ const andThen = parserA => parserB => stream =>
   );
 
 console.log(abParser(validData)); // [ [ 'a', 'b' ], [ 'c', 'd' ] ]
-console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing
-'a':", "Unexpected 'i'" ]
-console.log(abParser(invalidData2)); // [ Symbol(Failed), "Error parsing
-'b':", "Unexpected 'i'" ]
+console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
+console.log(abParser(invalidData2)); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
 We are now already reusing building blocks! (`onSuccess`) And we have a correct
@@ -144,8 +139,7 @@ const orElse = parserA => parserB => stream =>
 const aOrBParser = orElse(aParser)(bParser);
 console.log(aOrBParser(validData1)); // [ 'a', [ 'b', 'c', 'd' ] ]
 console.log(aOrBParser(validData2)); // [ 'b', [ 'c', 'd', 'e' ] ]
-console.log(aOrBParser(invalidData)); // [ Symbol(Failed), "Error parsing
-'b':", "Unexpected 'i'" ]
+console.log(aOrBParser(invalidData)); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
 Wow this one worked immidiately! This is because we never modify the stream. We

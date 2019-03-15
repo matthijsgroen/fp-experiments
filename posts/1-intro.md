@@ -1,17 +1,16 @@
 # My journey in learning Functional Programming
 
-Hi I'm Matthijs Groen, Frond-end developer at Kabisa, and I would like to share
-my experiences with diving into the concepts of Functional Programming. Before
-we dive into the Functional Programming (FP) goodness, I'd like to share where I
+Hi, I'm Matthijs Groen, a front-end developer at [Kabisa](https://www.kabisa.nl/) and I would like to share
+my experiences with diving into the concepts of Functional Programming.
+
+Before we dive into the Functional Programming (FP) goodness, I'd like to share where I
 was coming from, and why I had so much trouble adjusting to the FP concepts.
 
-I spend most of my developer life writing Object Oriented code, and even some
-procedural code before that. In Object oriented programming (at least how I was
-taught) How you name objects, methods etc. mattered.
+I spent most of my developer life writing object-oriented code, and some
+procedural code before that. In object-oriented programming (at least how I was
+taught) how you name objects, methods etc. matters.
 
-I have worked with Ruby on Rails for years. Not only was everything an object in
-that language, Rails itself is a framework with "conventions". These conventions
-make you productive in some cases, but also make you feel trapped in others.
+I have worked with [Ruby on Rails](https://rubyonrails.org/) for years. Not only was everything an object in that language, Rails itself is a framework with "conventions". These conventions make you productive in some cases, but also make you feel trapped in others.
 
 ```ruby
 3.times do
@@ -21,16 +20,14 @@ end
 
 > Yes, even a number is an object.
 
-After working with Ruby (doing full-stack), my work changed to be more frontend
-only. We used Backbone.js for years. Backbone, just like Ruby on Rails is Object
-Oriented, and follows the Model-View-Controller pattern.
+After working with Ruby (doing full-stack), my work changed to be more front-end only. We used [Backbone.js](https://backbonejs.org/) for years. Backbone, just like Ruby on Rails is object Oriented, and follows the Model-View-Controller pattern.
 
-A few years ago we changed the frontend stack from Backbone.js (in combination
-with Coffeescript) to Preact, Redux and modern EcmaScript.
+A few years ago we changed the front-end stack from Backbone.js (in combination
+with [CoffeeScript](https://coffeescript.org/)) to [Preact](https://preactjs.com/), [Redux](https://redux.js.org/) and modern ECMAScript.
 
 The thing I liked most when I just switched from Backbone.js to Preact was the
 way you could nest views. In Backbone this really was a pain. So you would end
-up with big templates. In Preact, you make a small reusable Component from
+up with big templates. In Preact, you make a small reusable component for
 everything, and nesting views was actually _the_ way to build up your UI.
 
 It also changed for us where logic lived.
@@ -56,8 +53,8 @@ where composable, the whole software became composable.
 
 ## First steps...
 
-I really started to like this approach. I got more colleagues on my team that
-**really** were into functional programming. Elixir, Haskell, Monoids, Functors,
+I really started to like this approach. In the meantime, I got more colleagues on my team that
+**really** were into functional programming. [Elixir](https://elixir-lang.org/), [Haskell](https://www.haskell.org/), Monoids, Functors,
 Category theory. I didn't understand half of what they were saying. And when I
 asked to explain stuff to me, most of the time it only gave me headaches...
 
@@ -119,7 +116,7 @@ There are more benefits:
 
 - Since a function only relies on its directly provided input, and is not
   allowed to change that input, not handling the result would actually make the
-  function call as if it never happened.
+  function call as if it never happened. (PaBa: is dit niet 'no side-effects' en 'idempotent' en zo ja: laat je deze termen bewust weg omdat je dit pas later "ontdekte"?)
 - When you are not allowed to change things, you know what data you are dealing
   with. It did not change by itself, unless you got new data after calling a
   function to change the data.
@@ -131,7 +128,7 @@ So I wanted to learn more about these concepts, and practise them. I wanted to
 understand all "the fuss".
 
 But there is a big gap coming from an object oriented world, where language
-where designed to be easily readable, and code was written as if they where
+were designed to be easily readable, and code was written as if they where
 stories, and going to a world where stuff is expressed as math, and concepts
 with strange names are explained by even more strange names to me.
 
@@ -143,11 +140,10 @@ yep.
 
 A colleague pointed me to
 ["Functors, applicatives and monads in pictures"](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html)
-I only started to make sense from it by opening the browser console and started
+It started to make sense to me only after opening the browser console and started
 typing JavaScript to try to follow along.
 
-> [Opening the browser developer console](https://support.monday.com/hc/en-us/articles/360002197259-How-to-Open-the-Developer-Console-in-your-Browser)
-> for this series is also a great way to follow along what I am building 🙂
+> [Opening the browser developer console](https://support.monday.com/hc/en-us/articles/360002197259-How-to-Open-the-Developer-Console-in-your-Browser) for this series is also a great way to follow along what I am building 🙂
 
 I could replicate the concepts, but I did not understand them, or how it would
 help me write better software.
@@ -235,11 +231,13 @@ just to see if it would really be possible.
 (see slide 11 for the list)
 
 Having the blogpost of Parser Combinators ready at hand, it would be a simple
-exercise of following along and implementing it in Javascript, and trying to
-apply a few more rules along the way. (I was wrong!)
+exercise of following along and implementing it in JavaScript, and trying to
+apply a few more rules along the way.
+
+But I was wrong!
 
 I never knew I would learn so much in a few days...
 
 In the upcoming posts I would like to take you along the journey I made into
-Functional Programming. This posts deliberately ends here, so if you would like
+Functional Programming. This post deliberately ends here, so if you would like
 to do the challenge yourself, you can do so without spoilers.

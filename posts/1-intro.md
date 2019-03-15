@@ -146,6 +146,9 @@ A colleague pointed me to
 I only started to make sense from it by opening the browser console and started
 typing JavaScript to try to follow along.
 
+> [Opening the browser developer console](https://support.monday.com/hc/en-us/articles/360002197259-How-to-Open-the-Developer-Console-in-your-Browser)
+> for this series is also a great way to follow along what I am building 🙂
+
 I could replicate the concepts, but I did not understand them, or how it would
 help me write better software.
 
@@ -205,11 +208,12 @@ const data = `
 
 /**
  * So, not like this!
- * no function usage of the host language
+ * no function usage of the host language, no dependencies
+ *
+ * import get from "lodash/get";
  *
  * const ast = JSON.parse(data);
- * const get = ast => path =>
- *   path.split(".").reduce((item, term) => item && item[term], ast);
+ * const get = ast => path => get(ast, path)
  * console.log(get(ast)("using.disallowed.0"));
  *
  */
@@ -228,9 +232,14 @@ just to see if it would really be possible.
 > Data, Recursion
 
 <https://www.slideshare.net/jdegoes/the-next-great-functional-programming-language>
+(see slide 11 for the list)
 
 Having the blogpost of Parser Combinators ready at hand, it would be a simple
 exercise of following along and implementing it in Javascript, and trying to
 apply a few more rules along the way. (I was wrong!)
 
 I never knew I would learn so much in a few days...
+
+In the upcoming posts I would like to take you along the journey I made into
+Functional Programming. This posts deliberately ends here, so if you would like
+to do the challenge yourself, you can do so without spoilers.

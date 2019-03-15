@@ -1,4 +1,4 @@
-# Creating the first Parsers (FP Challenge)
+# Creating the first Parser (FP Challenge)
 
 So in the folder where I created my `challenge.js` file, I added:
 
@@ -140,8 +140,8 @@ Yes, we made the character to parse dynamic. And No, because we changed the
 function signature.
 
 This last one would seem trivial, but it is not. The reason is that we want to
-combine parser (hence: Parser Combinators). To combine parsers, they should all
-follow the same pattern. Data string in, and Result and Remaining out, or an
+combine the parser (hence: Parser Combinators). To combine parsers, they should
+all follow the same pattern. Data string in, and Result and Remaining out, or an
 Error with details.
 
 # Currying
@@ -176,7 +176,7 @@ means you can capture some state inside these functions!
 Time to update the parser:
 
 ```javascript
-const characterParser = character => [head, ...tail]) =>
+const characterParser = character => ([head, ...tail]) =>
   head === character
     ? [head, tail]
     : [FAILED, `Error parsing '${character}':`, `Unexpected '${head}'`];
@@ -194,9 +194,90 @@ console.log(bParser("bcd")); // [ 'b', [ 'c', 'd' ] ]
 So now I could create a parser for any one character I would like. The next
 step, creating a parser to combinate others.
 
-## andThen parser
+But, feeling meer confident, it was time to enfore more rules:
 
-> I'm following the blogpost of
-> https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/
-> Therefore, I'm skipping over a lot of details. For more detailed explanations,
-> please read the original blogpost
+- Each function could only contain 1 statement.
+- Each function should be written as a lambda.
+- No if statements
+
+## What is a statement, what is an expression
+
+You can see a statement as a line of code, in javascript terminated by a
+semi-colon (`;`).
+
+```javascript
+const aVar = 2;
+const myFunc = number => number * 6;
+const result = aVar + 6 * myFunc(3);
+```
+
+This code has 3 statements: The defintion of `aVar`, `myFunc` and `result`. The
+`myFunc` lambda, has 1 statement: `number * 6`.
+
+An expression is anything that can return a value: `2`, `number`, `6`, `aVar`,
+`myFunc(3)`. So in a single statement, you can use multiple expressions, and
+combine them even to produce new values. (using addition `+` or multiply `*` for
+example).
+
+So the last line is actually 1 statement, containing 4 expressions.
+
+Since we could do quite some work in a single statement, I wanted to limit the
+amount of statements for a lambda to 1. With having only 1 statement in a
+lambda, you can omit the function body and an explicit return statement.
+
+```javascript
+const multiStatementLambda = a => {
+  const b = 5;
+  return a + b;
+};
+
+const singleStatementLamda = a => a + 5;
+```
+
+So now our eslint rules in total look like this:
+
+```json
+{
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 2018
+    },
+    "extends": "eslint:recommended",
+    "env": {},
+    "globals": {
+      "Symbol": "readonly",
+      "Array": "readonly",
+      "String": "readonly",
+      "Number": "readonly",
+      "console": "readonly"
+    },
+    "rules": {
+      "no-console": ["off"],
+      "no-use-before-define": ["error", { "functions": true, "classes": true }],
+      "no-eval": ["error"],
+      "no-implied-eval": ["error"],
+      "no-restricted-globals": ["error", "JSON"],
+      "max-statements": ["error", 1, { "ignoreTopLevelFunctions": false }],
+      "complexity": ["error", { "max": 3 }],
+      "arrow-body-style": ["error", "as-needed"],
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "FunctionExpression",
+          "message": "Please use Lambda notation () =>"
+        },
+        {
+          "selector": "IfStatement",
+          "message": "Try using ternary operator: true ? 1 : 2"
+        },
+        {
+          "selector": "VariableDeclaration[kind=let],VariableDeclaration[kind=var]",
+          "message": "Only use constants"
+        }
+      ]
+    }
+  }
+}
+```
+
+In the next post we will actually start combining parsers!

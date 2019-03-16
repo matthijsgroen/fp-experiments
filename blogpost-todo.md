@@ -1,13 +1,13 @@
 TODO:
 
-- Explain challenge I made for myself, in JS
-- Explain no-restricted-syntax
+- Add section to last post to put proper names on things
+  - Since a function only relies on its directly provided input, and is not
+    allowed to change that input, not handling the result would actually make
+    the function call as if it never happened. (PaBa: is dit niet 'no
+    side-effects' en 'idempotent' en zo ja: laat je deze termen bewust weg omdat
+    je dit pas later "ontdekte"?)
 
-  - https://eslint.org/docs/rules/no-restricted-syntax#disallow-specified-syntax-no-restricted-syntax
-  - AST selectors
-  - Online parser
-
-- Setup eslint rules:
+* Setup eslint rules:
   - No JSON parse
   - No eval, implied eval
   - No if statements

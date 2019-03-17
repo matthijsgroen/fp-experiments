@@ -68,7 +68,8 @@ I even added some more rules, to prevent cheating:
       "no-use-before-define": ["error", { "functions": true, "classes": true }],
       "no-eval": ["error"],
       "no-implied-eval": ["error"],
-      "no-restricted-globals": ["error", "JSON"],
+      "no-restricted-globals": ["error", "JSON"]
+    }
   }
 }
 ```

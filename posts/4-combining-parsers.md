@@ -166,12 +166,280 @@ const onSuccess = result => next =>
 const onFailure = result => next =>
   result[PARSED] === FAILED ? next(result) : result;
 
+const combineResult = resultA => resultB =>
+  onSuccess(resultB)(() => [
+    [resultA[PARSED], resultB[PARSED]],
+    resultB[REMAINING]
+  ]);
+
 const andThen = parserA => parserB => stream =>
-  onSuccess(parserA(stream))(result => parserB(result[REMAINING]));
+  onSuccess(parserA(stream))(result =>
+    combineResult(result)(parserB(result[REMAINING]))
+  );
 
 const orElse = parserA => parserB => stream =>
   onFailure(parserA(stream))(() => parserB(stream));
 ```
 
-Next time we will cover the more elaborate constructs, and this is where some
-cracks started to emerge in my pure FP, curry-all-the-things approach...
+## Working towards parsing our JSON structure
+
+The challenge was parsing the JSON structure at the top of our file.
+
+An EBNF notation of JSON looks like this:
+
+```ebnf
+value = string | number | object | array | "true" | "false" | "null";
+string = '"',
+  { ? Any unicode character except " or \ or control character ?
+  | "\", (
+    '"' | "\" | "/" | "b" | "f" | "n" | "r" | "t" |
+    "u", 4 * ? hexadeximal digit ?
+  ) }, '"';
+
+number = [ "-" ],
+  ( "0" | ? digit 1-9 ?, { ? digit ? } ),
+  [ ".", ? digit ?, { ? digit ? } ],
+  [ ( "e" | "E" ), [ "+" | "-" ], ? digit ?, { ? digit ? } ];
+
+array = "[", [ value, { ",", value } ], "]";
+object = "{", [ string, ":", value, { ",", string, ":", value } ], "}";
+```
+
+The most simple type in this format would be the `null`. So we should start with
+parsing that one.
+
+```javascript
+const nParser = characterParser("n");
+const uParser = characterParser("u");
+const lParser = characterParser("l");
+
+const nullParser = andThen(nParser)(
+  andThen(uParser)(andThen(lParser)(lParser))
+);
+
+console.log(nullParser("null")); // [ [ 'n', [ 'u', [Array] ] ], [] ]
+console.log(nullParser("text"));
+```
+
+We can now verify that the string starts with `"null"`. But we also want the
+result of parsing not be a nested construction, we want the literal `null` as
+result. In this case, we do not need to really process the result. We only need
+to verify that the string was `"null"` so that we can return the literal `null`.
+
+Let's create a parser that would return a specific value as result:
+
+```javascript
+const resultParser = result => stream => [result, stream];
+
+const returnNullParser = resultParser(null);
+console.log(returnNullParser("test")); // [ null, 'test' ]
+```
+
+Now we need the characterParsers to verify that the string "null" is in the
+stream, and then return the result:
+
+```javascript
+const resultParser = result => stream => [result, stream];
+
+const nParser = characterParser("n");
+const uParser = characterParser("u");
+const lParser = characterParser("l");
+
+const nullParser = andThen(
+  andThen(nParser)(andThen(uParser)(andThen(lParser)(lParser)))
+)(resultParser(null));
+
+console.log(nullParser("null")); // [ [ [ 'n', [Array] ], null ], [] ]
+console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing
+'n':", "Unexpected 't'" ]
+```
+
+We can now verify that the string contains `"null"` but the result now contains
+our converted result, but also the parsed text, that is not needed anymore. We
+will create a `andThenRight` function. it will require to parse both results
+(like `andThen`) but will only return the result of the right completed parser.
+
+```javascript
+const andThenRight = parserA => parserB => stream =>
+  onSuccess(andThen(parserA)(parserB)(stream))(result => [
+    result[PARSED][1],
+    result[REMAINING]
+  ]);
+
+const nullParser = andThenRight(
+  andThen(nParser)(andThen(uParser)(andThen(lParser)(lParser)))
+)(resultParser(null))
+
+console.log(nullParser("null")); // [ null, [] ]
+console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing
+'n':", "Unexpected 't'" ]
+```
+
+Yes! We did a lot of actions here, and it would be great to allow reuse by
+refactoring. First: Changing the result of a parser (what `thenRight` does)
+
+```javascript
+const mapResult = transform => parser => stream =>
+  onSuccess(parser(stream))(result => [
+    transform(result[PARSED]),
+    result[REMAINING]
+  ]);
+
+const andThenRight = parserA => parserB =>
+  mapResult(result => result[1])(andThen(parserA)(parserB));
+```
+
+And we could replace the `nullParser` with the 3 character parsers with this:
+
+```javascript
+const stringParser = string =>
+  [...string]
+    .map(char => characterParser(char))
+    .reduce((a, b) => andThen(a)(b));
+
+const nullParser = andThenRight(stringParser("null"))(resultParser(null));
+```
+
+Much more readable! But the stringParser is now still doing 2 tasks:
+
+1. convert string characters to a list of character parsers
+2. chain the characters parsers using `andThen`
+
+We could split this up as well.
+
+```javascript
+const chain = parsers => parsers.reduce((a, b) => andThen(a)(b));
+const stringParser = string =>
+  chain([...string].map(char => characterParser(char)));
+
+const nullParser = andThenRight(stringParser("null"))(resultParser(null));
+```
+
+If we make this one step more generic, we can create the boolean parser as well!
+
+```javascript
+const parseStringResult = string => result =>
+  andThenRight(stringParser(string))(returnResult(result));
+
+const nullParser = parseStringResult("null")(null);
+
+const boolParser = orElse(parseStringResult("true")(true))(
+  parseStringResult("false")(false)
+);
+
+console.log(nullParser("null rest")); // [ null, [ ' ', 'r', 'e', 's', 't' ] ]
+console.log(boolParser("true rest")); // [ true, [ ' ', 'r', 'e', 's', 't' ] ]
+console.log(boolParser("false rest")); // [ false, [ ' ', 'r', 'e', 's', 't' ] ]
+console.log(boolParser("fase rest")); // [ Symbol(Failed), "Error parsing 'l':", "Unexpected 's'" ]
+```
+
+It works as expected. The problem I have now is the error message is too vague
+to know it was from parsing a `null` or a `boolean`.
+
+Time to improve the message in an error occurs. Fortunately, this is really
+easy. We can use the `onFailure` we created before to update the error with a
+custom message.
+
+```javascript
+const addLabel = label => parser => stream =>
+  onFailure(parser(stream))(([failed, , error]) => [
+    failed,
+    `Error parsing '${label}':`,
+    error
+  ]);
+```
+
+And now we can use this function to wrap it around the `stringParser`
+
+```javascript
+const stringParser = string =>
+  addLabel(string)(chain([...string].map(char => characterParser(char))));
+
+console.log(boolParser("fase rest")); // [ Symbol(Failed), "Error parsing 'false':", "Unexpected 's'" ]
+```
+
+So we have nice messages as well. The composability of the functions really seem
+to pay off. The JSON parser seems to come to shape nicely. There are some things
+still bothering about this implementation though, and that is that using
+JavaScripts own `.map` and `.reduce` seem out of place. But we will first try to
+get the JSON parser complete, and then look into those functions.
+
+The implementation so far:
+
+```javascript
+const FAILED = Symbol("Failed");
+const PARSED = 0;
+const REMAINING = 1;
+
+const characterParser = character => ([head, ...tail]) =>
+  head === character
+    ? [head, tail]
+    : [FAILED, `Error parsing '${character}':`, `Unexpected '${head}'`];
+
+const onSuccess = result => next =>
+  result[PARSED] !== FAILED ? next(result) : result;
+
+const onFailure = result => next =>
+  result[PARSED] === FAILED ? next(result) : result;
+
+const combineResult = resultA => resultB =>
+  onSuccess(resultB)(() => [
+    [resultA[PARSED], resultB[PARSED]],
+    resultB[REMAINING]
+  ]);
+
+const andThen = parserA => parserB => stream =>
+  onSuccess(parserA(stream))(result =>
+    combineResult(result)(parserB(result[REMAINING]))
+  );
+
+const orElse = parserA => parserB => stream =>
+  onFailure(parserA(stream))(() => parserB(stream));
+
+const resultParser = result => stream => [result, stream];
+
+const mapResult = transform => parser => stream =>
+  onSuccess(parser(stream))(result => [
+    transform(result[PARSED]),
+    result[REMAINING]
+  ]);
+
+const andThenRight = parserA => parserB =>
+  mapResult(result => result[1])(andThen(parserA)(parserB));
+
+const addLabel = label => parser => stream =>
+  onFailure(parser(stream))(([failed, , error]) => [
+    failed,
+    `Error parsing '${label}':`,
+    error
+  ]);
+
+const chain = parsers => parsers.reduce((a, b) => andThen(a)(b));
+
+const stringParser = string =>
+  addLabel(string)(chain([...string].map(char => characterParser(char))));
+
+const parseStringResult = string => result =>
+  andThenRight(stringParser(string))(resultParser(result));
+
+const nullParser = parseStringResult("null")(null);
+
+const boolParser = orElse(parseStringResult("true")(true))(
+  parseStringResult("false")(false)
+);
+```
+
+So now we went from parsing a single character to parsing a small predefined
+string `null`, and updating the result it produced. We repeated to process for
+`true` and `false` that benefitted from refactoring of parsing the `null`. But
+since the outcome was fixed for these texts, we did not yet have to look at the
+real parsed data.
+
+Next step, a quoted string parser, will need us to look into this data, or else
+we cannot create the proper result string.
+
+I also liked I could just add a wrap around an earlier created function with
+`addLabel` and did not need to update other parts of the application to benefit
+from the improved error messages. We can now even easily wrap the `boolParser`
+to add a label that it was trying to parse a `boolean` instead of `true` or
+`false`.

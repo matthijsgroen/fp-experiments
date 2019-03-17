@@ -113,6 +113,9 @@ console.log(aParser("bcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpec
 Using the spread operator I would separate the first character from the rest,
 and compare it to the letter "a".
 
+By using the spread `...tail` operation, the string is converted to an array of
+characters.
+
 Then based on the success of the character, I would either:
 
 - Return the parsed character, and the remaining characters; or
@@ -191,11 +194,50 @@ console.log(aParser("abc")); // [ 'a', [ 'b', 'c' ] ]
 console.log(aParser("aabc")); // [ 'a', [ 'a', 'b', 'c' ] ]
 console.log(aParser("bcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'b'" ]
 console.log(bParser("bcd")); // [ 'b', [ 'c', 'd' ] ]
+console.log(aParser("")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'undefined'" ]
 ```
 
 > On desktop browsers you can follow along by opening the console and pasting
 > the code in there. A `const` can only be declared once though, so you might
 > need to refresh sometime to replace a const.
+
+Hmm that last one is not that nice. It is actually stating it reached the end of
+the file, so we change it in an EOF error:
+
+```javascript
+const characterParser = character => ([head, ...tail]) =>
+  head
+    ? head === character
+      ? [head, tail]
+      : [FAILED, `Error parsing '${character}':`, `Unexpected '${head}'`]
+    : [FAILED, "Error parsing: '${character}'", "Unexpected EOF"];
+
+const aParser = characterParser("a");
+
+console.log(aParser("")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected EOF" ]
+```
+
+The error is improved, but now the construction of an error is duplicated. Let's
+refactor that one:
+
+```javascript
+const parseError = target => error => [
+  FAILED,
+  `Error parsing: '${target}'`,
+  error
+];
+
+const characterParser = character => ([head, ...tail]) =>
+  head
+    ? head === character
+      ? [head, tail]
+      : parseError(character)(`Unexpected '${head}'`)
+    : parseError(character)("Unexpected EOF");
+
+const aParser = characterParser("a");
+
+console.log(aParser("")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected EOF" ]
+```
 
 So now I could create a parser for any one character I would like. The next
 step, creating a parser to combinate others.

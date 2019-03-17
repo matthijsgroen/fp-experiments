@@ -77,12 +77,18 @@ const PARSED = 0;
 const REMAINING = 1;
 const FAILED = Symbol("Failed");
 
+const parseError = target => error => [
+  FAILED,
+  `Error parsing: '${target}'`,
+  error
+];
+
 const satisfy = predicate => ([head, ...tail]) =>
   head
     ? predicate(head)
       ? [head, tail]
-      : [FAILED, "Error parsing:", `Unexpected '${head}'`]
-    : [FAILED, "Error parsing:", "Unexpected EOF"];
+      : parseError("Error parsing:")(`Unexpected '${head}'`)
+    : parseError("Error parsing:")("Unexpected EOF");
 
 const onSuccess = result => next =>
   result[PARSED] !== FAILED ? next(result) : result;
@@ -90,11 +96,9 @@ const onFailure = result => next =>
   result[PARSED] === FAILED ? next(result) : result;
 
 const addLabel = label => parser => stream =>
-  onFailure(parser(stream))(([failed, , error]) => [
-    failed,
-    `Error parsing '${label}':`,
-    error
-  ]);
+  onFailure(parser(stream))(([, , error]) =>
+    parseError(`Error parsing '${label}':`)(error)
+  );
 
 const characterParser = character =>
   addLabel(character)(satisfy(c => c === character));
@@ -105,7 +109,7 @@ const combineResult = resultA => resultB =>
     resultB[REMAINING]
   ]);
 
-const returnResult = returnValue => stream => [returnValue, stream];
+const resultParser = result => stream => [result, stream];
 const mapResult = transform => parser => stream =>
   onSuccess(parser(stream))(result => [
     transform(result[PARSED]),
@@ -123,18 +127,16 @@ const orElse = parserA => parserB => stream =>
 const choice = reduce(orElse);
 const chain = reduce(a => b => mapResult(([a, b]) => [...a, b])(andThen(a)(b)));
 
-const stringToChars = ([head, ...tail]) =>
-  head ? concat([head])(stringToChars(tail)) : [];
-const anyOf = string => choice(map(characterParser)(stringToChars(string)));
-const sequence = string => chain(map(characterParser)(stringToChars(string)));
+const anyOf = string => choice(map(characterParser)([...string]));
+const sequence = string => chain(map(characterParser)([...string]));
 const toList = mapResult(result => concat([result[0]])(result[1]));
 
 const applyMany = parser => f => stream =>
-  orElse(toList(andThen(parser)(f)))(returnResult([]))(stream);
+  orElse(toList(andThen(parser)(f)))(resultParser([]))(stream);
 const many = parser => Y(applyMany(parser));
 
 const some = parser => toList(andThen(parser)(many(parser)));
-const opt = parser => orElse(parser)(returnResult([]));
+const opt = parser => orElse(parser)(resultParser([]));
 
 const andThenLeft = parserA => parserB =>
   mapResult(result => result[0])(andThen(parserA)(parserB));
@@ -149,13 +151,13 @@ const sepBy1 = sepParser => parser =>
   toList(andThen(parser)(many(andThenRight(sepParser)(parser))));
 
 const sepBy = sepParser => parser =>
-  orElse(sepBy1(sepParser)(parser))(returnResult([]));
+  orElse(sepBy1(sepParser)(parser))(resultParser([]));
 
 const toString = mapResult(result => reduce(a => b => a + b)(result));
 const stringParser = string => addLabel(string)(sequence(string));
 
 const parseStringResult = string => result =>
-  andThenRight(stringParser(string))(returnResult(result));
+  andThenRight(stringParser(string))(resultParser(result));
 
 // Building the parser
 

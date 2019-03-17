@@ -1,21 +1,15 @@
 # Combining parsers
 
-I'm following the blogpost of
-https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/
-Therefore, I'm skipping over a lot of details. For more detailed explanations,
-please read the original blogpost.
-
-Since I have now also enabled a 'single statement' rule, my implementation will
-start to deviate from the one in the parser combinators blogpost.
-
-## Recap
-
 At this point, we are able to parse a single character from a character array or
 string. We have applied a lot of eslint rules, to force us to take a more and
 more functional approach. In this post, we will start combining the parsers to
 create more semantical constructions.
 
-## Combining parsers
+Since I have added a 'single statement' rule, my implementation will start to
+deviate from the one in
+[the parser combinators blogpost](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/).
+For more background of parser combinators, please checkout this great post by
+Scott Wlaschin.
 
 We established a signature for our parser:
 
@@ -36,16 +30,30 @@ parsers:
 ## andThen parser
 
 ```javascript
-const validData = "abcd";
-const invalidData1 = "iabcd";
-const invalidData2 = "aibcd";
+const FAILED = Symbol("Failed");
+const PARSED = 0;
+const REMAINING = 1;
+
+const parseError = target => error => [
+  FAILED,
+  `Error parsing: '${target}'`,
+  error
+];
+
+const characterParser = character => ([head, ...tail]) =>
+  head
+    ? head === character
+      ? [head, tail]
+      : parseError(character)(`Unexpected '${head}'`)
+    : parseError(character)("Unexpected EOF");
+
 const aParser = characterParser("a"); // see 'first-parser' post
 const bParser = characterParser("b");
 
 const andThen = parserA => parserB => stream => "???";
 
 const abParser = andThen(aParser)(bParser);
-console.log(abParser(validData)); // ???
+console.log(abParser("abcd")); // "???"
 ```
 
 We ar now just testing out the signature. We want to use 2 parsers, and that
@@ -57,9 +65,9 @@ Just starting on running parserA:
 const andThen = parserA => parserB => stream => parserA(stream);
 
 const abParser = andThen(aParser)(bParser);
-console.log(abParser(validData)); // ["a", ["b", "c", "d"]]
-console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
-console.log(abParser(invalidData2)); // ["a", ["b", "c", "d"]]
+console.log(abParser("abcd")); // ["a", ["b", "c", "d"]]
+console.log(abParser("iabcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
+console.log(abParser("aibcd")); // ["a", ["i", "b", "c", "d"]]
 ```
 
 Now we need to chain parserB to it if successful:
@@ -81,9 +89,9 @@ const andThen = parserA => parserB => stream =>
   onSuccess(parserA(stream))(result => parserB(result[REMAINING]));
 
 const abParser = andThen(aParser)(bParser);
-console.log(abParser(validData)); // [ 'b', [ 'c', 'd' ] ]
-console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
-console.log(abParser(invalidData2)); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
+console.log(abParser("abcd")); // [ 'b', [ 'c', 'd' ] ]
+console.log(abParser("iabcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
+console.log(abParser("aibcd")); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
 Ok the last 2 lines are as expected now. but the first one is incorrect. the
@@ -103,9 +111,9 @@ const andThen = parserA => parserB => stream =>
     combineResult(result)(parserB(result[REMAINING]))
   );
 
-console.log(abParser(validData)); // [ [ 'a', 'b' ], [ 'c', 'd' ] ]
-console.log(abParser(invalidData1)); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
-console.log(abParser(invalidData2)); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
+console.log(abParser("abcd")); // [ [ 'a', 'b' ], [ 'c', 'd' ] ]
+console.log(abParser("iabcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'i'" ]
+console.log(abParser("aibcd")); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
 We are now already reusing building blocks! (`onSuccess`) And we have a correct
@@ -114,16 +122,13 @@ result!
 ## orElse parser
 
 ```javascript
-const validData1 = "abcd";
-const validData2 = "bcde";
-const invalidData = "iabcd";
 const aParser = characterParser("a");
 const bParser = characterParser("b");
 
 const orElse = parserA => parserB => stream => "???";
 
 const aOrBParser = orElse(aParser)(bParser);
-console.log(aOrBParser(validData1)); // ???
+console.log(aOrBParser("abcd")); // "???"
 ```
 
 It will follow the same pattern. But the implementation of this one will already
@@ -137,9 +142,9 @@ const orElse = parserA => parserB => stream =>
   onFailure(parserA(stream))(() => parserB(stream));
 
 const aOrBParser = orElse(aParser)(bParser);
-console.log(aOrBParser(validData1)); // [ 'a', [ 'b', 'c', 'd' ] ]
-console.log(aOrBParser(validData2)); // [ 'b', [ 'c', 'd', 'e' ] ]
-console.log(aOrBParser(invalidData)); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
+console.log(aOrBParser("abcd")); // [ 'a', [ 'b', 'c', 'd' ] ]
+console.log(aOrBParser("bcde")); // [ 'b', [ 'c', 'd', 'e' ] ]
+console.log(aOrBParser("iabcd")); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
 Wow this one worked immidiately! This is because we never modify the stream. We
@@ -155,10 +160,18 @@ const FAILED = Symbol("Failed");
 const PARSED = 0;
 const REMAINING = 1;
 
+const parseError = target => error => [
+  FAILED,
+  `Error parsing: '${target}'`,
+  error
+];
+
 const characterParser = character => ([head, ...tail]) =>
-  head === character
-    ? [head, tail]
-    : [FAILED, `Error parsing '${character}':`, `Unexpected '${head}'`];
+  head
+    ? head === character
+      ? [head, tail]
+      : parseError(character)(`Unexpected '${head}'`)
+    : parseError(character)("Unexpected EOF");
 
 const onSuccess = result => next =>
   result[PARSED] !== FAILED ? next(result) : result;
@@ -188,7 +201,7 @@ The challenge was parsing the JSON structure at the top of our file.
 An EBNF notation of JSON looks like this:
 
 ```ebnf
-value = string | number | object | array | "true" | "false" | "null";
+value = object | array | number | string | "true" | "false" | "null";
 string = '"',
   { ? Any unicode character except " or \ or control character ?
   | "\", (
@@ -342,11 +355,9 @@ custom message.
 
 ```javascript
 const addLabel = label => parser => stream =>
-  onFailure(parser(stream))(([failed, , error]) => [
-    failed,
-    `Error parsing '${label}':`,
-    error
-  ]);
+  onFailure(parser(stream))(([, , error]) =>
+    parseError(`Error parsing '${label}':`)(error)
+  );
 ```
 
 And now we can use this function to wrap it around the `stringParser`
@@ -371,10 +382,18 @@ const FAILED = Symbol("Failed");
 const PARSED = 0;
 const REMAINING = 1;
 
+const parseError = target => error => [
+  FAILED,
+  `Error parsing: '${target}'`,
+  error
+];
+
 const characterParser = character => ([head, ...tail]) =>
-  head === character
-    ? [head, tail]
-    : [FAILED, `Error parsing '${character}':`, `Unexpected '${head}'`];
+  head
+    ? head === character
+      ? [head, tail]
+      : parseError(character)(`Unexpected '${head}'`)
+    : parseError(character)("Unexpected EOF");
 
 const onSuccess = result => next =>
   result[PARSED] !== FAILED ? next(result) : result;
@@ -408,11 +427,9 @@ const andThenRight = parserA => parserB =>
   mapResult(result => result[1])(andThen(parserA)(parserB));
 
 const addLabel = label => parser => stream =>
-  onFailure(parser(stream))(([failed, , error]) => [
-    failed,
-    `Error parsing '${label}':`,
-    error
-  ]);
+  onFailure(parser(stream))(([, , error]) =>
+    parseError(`Error parsing '${label}':`)(error)
+  );
 
 const chain = parsers => parsers.reduce((a, b) => andThen(a)(b));
 

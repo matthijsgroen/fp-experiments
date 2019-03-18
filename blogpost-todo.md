@@ -1,3 +1,14 @@
+It seems the chapters will be:
+
+1. Introduction to the challenge
+2. Creating the first parser
+3. Combining parsers (null and boolean)
+4. Parsing strings and numbers
+5. Parsing objects and arrays
+6. Fixing the cheats
+7. Performance
+8. Conclusion
+
 TODO:
 
 - Add section to last post to put proper names on things
@@ -18,22 +29,10 @@ TODO:
   - Allow console.log for output
   - No var / let
 
-## Step 1: Currying
+1. First parser
 
-- Functions producing functions
-- Setup eslint rule:
-  - Max 1 argument
-
-## Step 2: Following the blogpost
-
-https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/
-
-### First parser
-
-- Setting up the parser return value: [FAILED, errMessage] | [result, remaining]
-  (Using Symbol)
-
-- Creating the first parser
+- Add notice that input changed to char array using the splat
+- Show a `.toString()` of a curried function
 
 ### First recursion
 
@@ -74,5 +73,9 @@ https://blog.klipse.tech/lambda/2016/08/10/almost-y-combinator-javascript.html
 - Setup eslint rules:
 
   - No assignments
+
+# Performance
+
+Change input from string/array char to an object with only positions
 
 Final implementation / Final eslint rules

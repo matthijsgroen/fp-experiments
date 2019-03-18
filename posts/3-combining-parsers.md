@@ -78,8 +78,8 @@ const onSuccess = result => next =>
   result[PARSED] !== FAILED ? next(result) : result;
 ```
 
-Using this function, I can determine if we had a success. If it is successful, the parser
-will execute the next step, providing the result.
+Using this function, I can determine if we had a success. If it is successful,
+the parser will execute the next step, providing the result.
 
 And now in action:
 
@@ -353,9 +353,7 @@ custom message.
 
 ```javascript
 const addLabel = label => parser => stream =>
-  onFailure(parser(stream))(([, , error]) =>
-    parseError(`Error parsing '${label}':`)(error)
-  );
+  onFailure(parser(stream))(([, , error]) => parseError(label)(error));
 ```
 
 And now we can use this function to wrap it around the `stringParser`
@@ -425,9 +423,7 @@ const andThenRight = parserA => parserB =>
   mapResult(result => result[1])(andThen(parserA)(parserB));
 
 const addLabel = label => parser => stream =>
-  onFailure(parser(stream))(([, , error]) =>
-    parseError(`Error parsing '${label}':`)(error)
-  );
+  onFailure(parser(stream))(([, , error]) => parseError(label)(error));
 
 const chain = parsers => parsers.reduce((a, b) => andThen(a)(b));
 

@@ -1,7 +1,7 @@
 # Playing around with ESLint
 
 For the functional programming challenge I created for myself, I wanted to
-restrict myself from cheating, and forcing myself to a particular syntax. To do
+restrict myself from cheating and forcing myself to a particular syntax. To do
 this, I used ESLint.
 
 > eslint is a linting tool for EcmaScript, where you can define your own rules
@@ -20,7 +20,7 @@ that has been typed. You can see this in action using https://eslint.org/parser/
 Syntax Tree) on the right side.
 
 You can compare this tree a bit like HTML also is a tree of nodes (and
-attributes). And following this same concept, you can target specific elements
+attributes). Following this same concept, you can target specific elements
 in this tree using a selector (just like in CSS!)
 
 https://eslint.org/docs/developer-guide/selectors

@@ -1,7 +1,7 @@
 # Combining parsers
 
 At this point, we are able to parse a single character from a character array or
-string. We have applied a lot of eslint rules, to force us to take a more and
+string. We have applied a lot of eslint rules to force us to take a more and
 more functional approach. In this post, we will start combining the parsers to
 create more semantical constructions.
 
@@ -78,7 +78,7 @@ const onSuccess = result => next =>
   result[PARSED] !== FAILED ? next(result) : result;
 ```
 
-Using this function, I can determine if we had a success, and when we do, it
+Using this function, I can determine if we had a success. If it is successful, the parser
 will execute the next step, providing the result.
 
 And now in action:
@@ -288,7 +288,7 @@ console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing
 'n':", "Unexpected 't'" ]
 ```
 
-Yes! We did a lot of actions here, and it would be great to allow reuse by
+Yes! We did a lot of actions here and it would be great to allow reuse by
 refactoring. First: Changing the result of a parser (what `thenRight` does)
 
 ```javascript
@@ -371,7 +371,7 @@ console.log(boolParser("fase rest")); // [ Symbol(Failed), "Error parsing 'false
 
 So we have nice messages as well. The composability of the functions really seem
 to pay off. The JSON parser seems to come to shape nicely. There are some things
-still bothering about this implementation though, and that is that using
+still bothering about this implementation though and that is that using
 JavaScripts own `.map` and `.reduce` seem out of place. But we will first try to
 get the JSON parser complete, and then look into those functions.
 

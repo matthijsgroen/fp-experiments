@@ -167,12 +167,13 @@ by Scott Wlaschin, because I work and create DSLs in various projects. It looked
 like fun to build something like that for myself.
 
 So I decided to create a challenge for myself, to learn more about Functional
-Programming, and playing around with the concept of Parser Combinators.
+Programming and playing around with the concept of Parser Combinators.
 
 # The Challenge
 
-Since I'm more of a learning by doing kind of guy, and work only in JavaScript
-nowadays, I opened my editor and defined the following challenge:
+Since I'm more of a learning by doing kind of guy and work only in JavaScript
+nowadays, I opened my editor and defined the following challenge in a
+`challenge.js` file:
 
 ```javascript
 const data = `
@@ -244,7 +245,7 @@ just to see if it would really be possible.
 (see slide 11 for the list)
 
 Having the blogpost of Parser Combinators ready at hand, it would be a simple
-exercise of following along and implementing it in JavaScript, and trying to
+exercise of following along and implementing it in JavaScript and trying to
 apply a few more rules along the way.
 
 But I was wrong!

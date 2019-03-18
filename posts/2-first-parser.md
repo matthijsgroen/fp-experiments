@@ -8,7 +8,7 @@ yarn init
 yarn add eslint --dev
 ```
 
-> eslint is a linting tool for EcmaScript, where you can define your own rules
+> eslint is a linting tool for ECMAScript, where you can define your own rules
 > of what you consider to be "good" code.
 
 Now I added eslint, I could add custom rules, by updating my just generated
@@ -34,10 +34,20 @@ Now I added eslint, I could add custom rules, by updating my just generated
 }
 ```
 
-By not specifying an `env` I was restricting a lot of standard JS. But in this
-case, even too much, so I added a rule to allow some globals. And since I would
-not use `export` constructs in this file, I would want to use `console.log` for
-outputting some results.
+In eslint, you normally specify an `env` in which the code will be run, like a
+`browser`, `node` or `worker`. This will automatically allow a lot of syntax
+specific to such an environment. By not specifying an `env`, I was restricting a
+lot of standard JS. But in this case even too much. Type objects like `String`,
+`Array` and `Number`. Where also disabled, and `console.log` was also not
+allowed.
+
+(normally having no `console.log` is a good thing, it prevents debug or other
+info to remain in your code when it is no longer needed).
+
+But since I was not exporting anything from my file, I needed a way to see some
+output of my code. So I enabled `console.log` manually.
+
+Additions to the eslint config:
 
 ```json
 {
@@ -56,10 +66,10 @@ outputting some results.
 }
 ```
 
-The editor I'm using would directly apply these rules, so I would have direct
-feedback whether I was breaking any rules.
+The editor I'm using applies these rules directly, so I would have direct
+feedback whether I was breaking any of my own rules.
 
-I even added some more rules, to prevent cheating:
+I even added some more rules to prevent cheating:
 
 ```json
 {
@@ -95,7 +105,9 @@ Great! Let's start!
 
 ## Parsing the first character
 
-Just like the Parser Combinator post, I started by parsing my first character:
+Just like
+[the Parser Combinator post](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/),
+I started by parsing my first character:
 
 ```javascript
 const FAILED = Symbol("Failed");
@@ -131,12 +143,12 @@ const parser = (character, [head, ...tail]) =>
     ? [head, tail]
     : [FAILED, `Error parsing '${character}':`, `Unexpected '${head}'`];
 
-console.log(aParser("abc")); // [ 'a', [ 'b', 'c' ] ]
-console.log(aParser("aabc")); // [ 'a', [ 'a', 'b', 'c' ] ]
-console.log(aParser("bcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'b'" ]
+console.log(parser("a", "abc")); // [ 'a', [ 'b', 'c' ] ]
+console.log(parser("a", "aabc")); // [ 'a', [ 'a', 'b', 'c' ] ]
+console.log(parser("a", "bcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'b'" ]
 ```
 
-The output of each console.log would be the same. But is it an improvement?
+The output of each `console.log` would be the same. But is it an improvement?
 
 Yes and no.
 
@@ -150,7 +162,7 @@ Error with details.
 
 # Currying
 
-To get around this issue, we can use a concept, called Currying. As wikipedia
+To get around this issue, we can use a concept, called _Currying_. As Wikipedia
 states it:
 
 > In mathematics and computer science, currying is the technique of translating
@@ -161,7 +173,7 @@ This would actually mean that our function would not be "data" in, "data" out
 like I was used to. It would be "data" in, "function" out. Like a function
 factory.
 
-A Mathematic example:
+A mathematic example:
 
 ```javascript
 const add = (a, b) => a + b;

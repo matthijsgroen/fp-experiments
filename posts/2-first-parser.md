@@ -107,7 +107,10 @@ Great! Let's start!
 
 Just like
 [the Parser Combinator post](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/),
-I started by parsing my first character:
+I started by creating a parser that could only parse a specific single character
+from an input (the letter `a`). On success, it should return the parsed result
+and the rest of the input. On failure, it should return an indication that it
+failed containing the message what it tried to achieve, and why it failed:
 
 ```javascript
 const FAILED = Symbol("Failed");
@@ -122,20 +125,12 @@ console.log(aParser("aabc")); // [ 'a', [ 'a', 'b', 'c' ] ]
 console.log(aParser("bcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected 'b'" ]
 ```
 
-Using the spread operator I would separate the first character from the rest,
-and compare it to the letter "a".
-
-By using the spread `...tail` operation, the string is converted to an array of
-characters.
-
-Then based on the success of the character, I would either:
-
-- Return the parsed character, and the remaining characters; or
-- Return a "FAILED" with information about the error (what we tried to parse,
-  and what got in the way)
+Using the spread operator (`[head, ...tail]`) I would separate the first
+character from the rest, and compare it to the letter "a". The tail is
+automatically transformed into an array of characters.
 
 To change that we could parse more than just the "a", it would be smart to turn
-that into an function argument:
+the character we parse into a function argument:
 
 ```javascript
 const parser = (character, [head, ...tail]) =>
@@ -157,8 +152,8 @@ function signature.
 
 This last one would seem trivial, but it is not. The reason is that we want to
 combine the parser (hence: Parser Combinators). To combine parsers, they should
-all follow the same pattern. Data string in, and Result and Remaining out, or an
-Error with details.
+all follow the same signature. Data string in, and Result and Remaining out, or
+an Error with details.
 
 # Currying
 
@@ -186,9 +181,9 @@ addOne(5); // 6
 addCurried(7)(4); // 11
 ```
 
-This is a really powerful concept. Not could this means we could create a
-function that would return a letter parser in the parser example, this also
-means you can capture some state inside these functions!
+This is a really powerful concept. Not only can we create a function that would
+return a letter parser in the parser example, this also means you can capture
+some state inside these functions!
 
 Time to update the parser:
 
@@ -211,10 +206,10 @@ console.log(aParser("")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected
 
 > On desktop browsers you can follow along by opening the console and pasting
 > the code in there. A `const` can only be declared once though, so you might
-> need to refresh sometime to replace a const.
+> need to refresh sometimes to replace a const.
 
 Hmm that last one is not that nice. It is actually stating it reached the end of
-the file, so we change it in an EOF error:
+the file, so we change it into an EOF error:
 
 ```javascript
 const characterParser = character => ([head, ...tail]) =>
@@ -251,10 +246,10 @@ const aParser = characterParser("a");
 console.log(aParser("")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected EOF" ]
 ```
 
-So now I could create a parser for any one character I would like. The next
-step, creating a parser to combinate others.
+So now I can create a parser for any one character I would like. The next step,
+creating a parser to combine others.
 
-But, feeling meer confident, it was time to enfore more rules:
+But, feeling more confident, it was time to enforce more rules:
 
 - Each function could only contain 1 statement.
 - Each function should be written as a lambda.
@@ -262,7 +257,7 @@ But, feeling meer confident, it was time to enfore more rules:
 
 ## What is a statement, what is an expression
 
-You can see a statement as a line of code, in javascript terminated by a
+You can see a statement as a line of code, in JavaScript terminated by a
 semi-colon (`;`).
 
 ```javascript
@@ -271,8 +266,8 @@ const myFunc = number => number * 6;
 const result = aVar + 6 * myFunc(3);
 ```
 
-This code has 3 statements: The defintion of `aVar`, `myFunc` and `result`. The
-`myFunc` lambda, has 1 statement: `number * 6`.
+This code has 3 statements: The definition of `aVar`, `myFunc` and `result`. The
+`myFunc` function, has 1 statement: `number * 6`.
 
 An expression is anything that can return a value: `2`, `number`, `6`, `aVar`,
 `myFunc(3)`. So in a single statement, you can use multiple expressions, and
@@ -294,7 +289,7 @@ const multiStatementLambda = a => {
 const singleStatementLamda = a => a + 5;
 ```
 
-So now our eslint rules in total look like this:
+So now our eslint rules in the `package.json` look like this:
 
 ```json
 {

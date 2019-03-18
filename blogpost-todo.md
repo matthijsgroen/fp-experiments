@@ -32,7 +32,6 @@ TODO:
 1. First parser
 
 - Add notice that input changed to char array using the splat
-- Show a `.toString()` of a curried function
 
 ### First recursion
 

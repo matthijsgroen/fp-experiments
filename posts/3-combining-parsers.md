@@ -147,7 +147,7 @@ console.log(aOrBParser("bcde")); // [ 'b', [ 'c', 'd', 'e' ] ]
 console.log(aOrBParser("iabcd")); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
-Wow this one worked immidiately! This is because we never modify the stream. We
+Wow this one worked immediately! This is because we never modify the stream. We
 create a new stream every time. So parserB is able to retry it on exactly the
 same data.
 
@@ -263,8 +263,7 @@ const nullParser = andThen(
 )(resultParser(null));
 
 console.log(nullParser("null")); // [ [ [ 'n', [Array] ], null ], [] ]
-console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing
-'n':", "Unexpected 't'" ]
+console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing 'n':", "Unexpected 't'" ]
 ```
 
 We can now verify that the string contains `"null"` but the result now contains
@@ -281,11 +280,10 @@ const andThenRight = parserA => parserB => stream =>
 
 const nullParser = andThenRight(
   andThen(nParser)(andThen(uParser)(andThen(lParser)(lParser)))
-)(resultParser(null))
+)(resultParser(null));
 
 console.log(nullParser("null")); // [ null, [] ]
-console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing
-'n':", "Unexpected 't'" ]
+console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing 'n':", "Unexpected 't'" ]
 ```
 
 Yes! We did a lot of actions here and it would be great to allow reuse by

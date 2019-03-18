@@ -5,11 +5,11 @@ Hi, I'm Matthijs Groen, a front-end developer at
 diving into the concepts of Functional Programming.
 
 Before we dive into the Functional Programming (FP) goodness, I'd like to share
-where I was coming from, and why I had so much trouble adjusting to the FP
+where I was coming from and why I had so much trouble adjusting to the FP
 concepts.
 
-I spent most of my developer life writing object-oriented code, and some
-procedural code before that. In object-oriented programming (at least how I was
+I spent most of my developer life writing object-oriented code and some
+procedural code before that. In Object-Oriented programming (at least how I was
 taught) how you name objects, methods etc. matters.
 
 I have worked with [Ruby on Rails](https://rubyonrails.org/) for years. Not only
@@ -27,7 +27,7 @@ end
 
 After working with Ruby (doing full-stack), my work changed to be more front-end
 only. We used [Backbone.js](https://backbonejs.org/) for years. Backbone, just
-like Ruby on Rails is object Oriented, and follows the Model-View-Controller
+like Ruby on Rails is Object-Oriented, and follows the Model-View-Controller
 pattern.
 
 A few years ago we changed the front-end stack from Backbone.js (in combination
@@ -73,8 +73,8 @@ me headaches...
 But I really started to like working with functions only approach. No
 `getName()` that could reply with a different value each time you called it. It
 became more predictable. Also working with Redux brought new concepts to the
-table. Those of immutability. Not changing data, but reconstructing new data
-based on changes.
+table such as immutability. Not changing data, but reconstructing new data based
+on changes.
 
 ### An example:
 
@@ -126,13 +126,13 @@ getName(me); // Matthijs Groen
 
 There are more benefits:
 
-- Since a function only relies on its directly provided input, and is not
-  allowed to change that input, not handling the result would actually make the
-  function call as if it never happened.
+- Since a function only relies on its directly provided input and is not allowed
+  to change that input, not handling the result would actually make the function
+  call as if it never happened.
 - When you are not allowed to change things, you know what data you are dealing
   with. It did not change by itself, unless you got new data after calling a
   function to change the data.
-- Since this locking of input and output is so strict, you can cache processes
+- Since this relation of input and output is so strict, you can cache processes
   better, skipping performance heavy steps.
 - Reusability is very, very high.
 
@@ -140,9 +140,9 @@ So I wanted to learn more about these concepts, and practise them. I wanted to
 understand all "the fuss".
 
 But there is a big gap coming from an object oriented world, where language were
-designed to be easily readable, and code was written as if they where stories,
-and going to a world where stuff is expressed as math, and concepts with strange
-names are explained by even more strange names to me.
+designed to be easily readable and code was written as if they where stories,
+and going to a world where stuff is expressed as math and concepts with strange
+names are explained by even more strange names.
 
 ```haskell
 fmap :: (a -> b) -> f a -> f b

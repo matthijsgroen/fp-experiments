@@ -82,6 +82,15 @@ const parseError = target => error => [
   error
 ];
 
+// ~300ms
+//const head = stream => stream[0];
+//const tail = ([, ...tail]) => tail;
+
+/// ~40ms
+//const toStream = textData => [0, textData];
+//const head = ([pos, textData]) => textData[pos];
+//const tail = ([pos, textData]) => [pos + 1, textData];
+
 const satisfy = predicate => ([head, ...tail]) =>
   head
     ? predicate(head)
@@ -276,3 +285,17 @@ const jsonStruct = jsonParser(data);
 console.log(get(jsonStruct)("using.disallowed.0"));
 console.log(get(jsonStruct)("points.full-json"));
 console.log(get(jsonStruct)("jsonTypes.2"));
+
+/* -- for performance indication
+const startTime = new Date() * 1;
+const jsonData = `[${data}, ${data}, ${data}, ${data}, ${data}]`;
+console.log(jsonData.length);
+const jsonStruct = jsonParser(jsonData);
+const endTime = new Date() * 1;
+
+console.log(get(jsonStruct)("0.using.disallowed.0"));
+console.log(get(jsonStruct)("0.points.full-json"));
+console.log(get(jsonStruct)("0.jsonTypes.2"));
+
+console.log("Duration", endTime - startTime);
+*/

@@ -83,11 +83,8 @@ const many = parser => stream =>
 
 The parser will try to apply itself, and on success call itself to try the next
 character. We are breaking one of the rules of the challenge now: _Recursion to
-own function_. The reasoning is, the function now has a strict reference to
-itself.
-
-For now, I just want to focus on completing the JSON parser, so I will park this
-issue for later.
+own function_. For now, I just want to focus on completing the JSON parser, so I
+will park this challenge for later.
 
 We are able to parse the whole (test) string now:
 

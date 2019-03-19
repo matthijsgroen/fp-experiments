@@ -8,6 +8,8 @@ So far we defined the challenge, added some rules to adhere, created a character
 parser and we are able to parse the first literals of JSON: `null`, `true` and
 `false`.
 
+## Quoted string parser
+
 Its time for the next type to parse: _Strings_.
 
 A String according to the JSON spec is defined as follows:
@@ -32,7 +34,14 @@ console.log(quoteParser('"test"')); // [ '"', [ 't', 'e', 's', 't', '"' ] ]
 ```
 
 The string could contain any character, so having to define them all using the
-`characterParser` would be madness. Time to change the strategy here:
+`characterParser` would be madness. Time to change the strategy here, by
+changing the `characterParser` into a `satify` method, that parses / consumes
+the head of our stream when it satisfies a predicate.
+
+### What is a predicate?
+
+A Predicate is a function that will simply return `true` or `false` based on the
+input. It is commonly used in `[].filter()`, `[].some()` and `[].every()`.
 
 ```javascript
 const parseError = message => error => [FAILED, message, error];
@@ -178,6 +187,113 @@ const quotedParser = between(quoteParser)(quoteParser);
 const quotedStringParser = quotedParser(toString(many(stringCharParser)));
 const quotedBooleanParser = quotedParser(boolParser);
 ```
+
+Lets continue with the escape characters of our string:
+
+```javascript
+console.log(quotedStringParser('"test\\nmultiple \\"lines\\""'));
+// [ 'test\\nmultiple \\', [ 'l', 'i', 'n', 'e', 's', '\\', '"', '"' ] ]
+```
+
+We could start by listing all special characters we have, and what result they
+should produce. Then create a `choice` parser, that is a `orElse` for a list of
+parsers. (Just like `chain` is for the `andThen`)
+
+```javascript
+const quoteParser = characterParser('"');
+const stringCharParser = satisfy(c => c !== '"' && c !== "\\");
+const specialCharacters = [
+  ['\\"', '"'],
+  ["\\\\", "\\"],
+  ["\\/", "/"],
+  ["\\b", "\b"],
+  ["\\f", "\f"],
+  ["\\n", "\n"],
+  ["\\r", "\r"],
+  ["\\t", "\t"]
+];
+const choice = parsers => parsers.reduce((a, b) => orElse(a)(b));
+const escapedCharParser = choice(
+  specialCharacters.map(([match, result]) => parseStringResult(match)(result))
+);
+
+const quotedStringParser = between(quoteParser)(quoteParser)(
+  toString(many(orElse(stringCharParser)(escapedCharParser)))
+);
+console.log(quotedStringParser('"test\\nmultiple \\"lines\\""'));
+// [ 'test\nmultiple "lines"', [] ]
+```
+
+So the string was in there as well now. I really like how the `chain` and
+`choice` are alike:
+
+```javascript
+const chain = parsers => parsers.reduce((a, b) => andThen(a)(b));
+const choice = parsers => parsers.reduce((a, b) => orElse(a)(b));
+```
+
+What I did not like however, was that the function passed into the `.reduce` had
+to accept 2 parameters. Time to force us into another direction, by adding yet
+another selector to our `no-restricted-syntax` eslint rule, in our
+`package.json`:
+
+```json
+{
+  "eslintConfig": {
+    "rules": {
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "ArrowFunctionExpression[params.length > 1]",
+          "message": "Only 1 argument allowed. Please use currying"
+        }
+      ]
+    }
+  }
+}
+```
+
+The following lines are now giving errors:
+
+```javascript
+const chain = parsers => parsers.reduce((a, b) => andThen(a)(b));
+const choice = parsers => parsers.reduce((a, b) => orElse(a)(b));
+```
+
+So we build our own, recursive reducer:
+
+```javascript
+const doReduce = reducer => start => ([head, ...tail]) =>
+  head ? doReduce(reducer)(reducer(start)(head))(tail) : start;
+
+const reduce = reducer => ([head, ...tail]) => doReduce(reducer)(head)(tail);
+
+console.log(doReduce(a => b => a + b)(1)([2, 3, 4])); // 10
+console.log(reduce(a => b => a + b)([1, 2, 3, 4])); // 10
+```
+
+The `doReduce` function will accept a reducer, a start value and a list. The
+reducer should have the signature `acc => elem => {}`. The `reduce` function is
+a convenient method to use the first value of the list as initial accumulated
+value.
+
+Having our new reducer function, we are now actually able to write:
+
+```javascript
+const chain = list => reduce(a => b => andThen(a)(b))(list);
+const choice = list => reduce(a => b => orElse(a)(b))(list);
+```
+
+Which is actually the same as:
+
+```javascript
+const chain = reduce(andThen);
+const choice = reduce(orElse);
+```
+
+`:mindblown:`
+
+## The number parser
 
 Before we start on the escape characters of our string, here is the complete
 implementation up till now. I moved the order of the implementation around, to

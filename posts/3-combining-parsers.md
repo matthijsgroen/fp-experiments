@@ -1,7 +1,7 @@
 # Combining parsers
 
-At this point, we are able to parse a single character from a character array or
-string. We have applied a lot of eslint rules to force us to take a more and
+At this point, we are able to parse a single character from a string or array of
+characters. We have applied a lot of eslint rules to force us to take a more and
 more functional approach. In this post, we will start combining the parsers to
 create more semantical constructions.
 
@@ -13,11 +13,14 @@ Scott Wlaschin.
 
 We established a signature for our parser:
 
+```typescript
+type stream = string[];
+type success = [any, stream];
+type failure = [Symbol, string, string];
+type parser = (stream: stream) => success | failure;
 ```
-(input: string) =>
-  [result: string, remaining: string] |
-  [FAILURE, parseAttemptMessage: string, parseEncounteredMessage: string]
-```
+
+## andThen parser
 
 To actually parse more than one character, we want to create structure how the
 parser should continue when succesful or when it fails, by creating 2 more
@@ -26,8 +29,6 @@ parsers:
 - andThen (to chain a parser after a succesful first parser)
 - orElse (to try an alternative parser after a failed attempt of the first
   parser)
-
-## andThen parser
 
 ```javascript
 const FAILED = Symbol("Failed");
@@ -440,17 +441,37 @@ const boolParser = orElse(parseStringResult("true")(true))(
 );
 ```
 
-So now we went from parsing a single character to parsing a small predefined
-string `null`, and updating the result it produced. We repeated to process for
-`true` and `false` that benefitted from refactoring of parsing the `null`. But
-since the outcome was fixed for these texts, we did not yet have to look at the
-real parsed data.
+## Conclusion
 
-Next step, a quoted string parser, will need us to look into this data, or else
-we cannot create the proper result string.
+The code so far:
 
-I also liked I could just add a wrap around an earlier created function with
-`addLabel` and did not need to update other parts of the application to benefit
-from the improved error messages. We can now even easily wrap the `boolParser`
-to add a label that it was trying to parse a `boolean` instead of `true` or
-`false`.
+- We can now combine using `andThen`, `orElse`, `andThenRight`, `addLabel`, and
+  `chain`
+- We can return a result using `resultParser`
+- We can improve parse error messages using `addLabel`
+- We can parse a `null`, `true` and `false`
+
+What I learned so far:
+
+- Currying is actually pretty easy to get used to
+- Having functions with only one statement doesn't feel like a handicap yet
+
+What did I like:
+
+- Its fun building a parser this way
+- Composition feels powerful
+- Creating new features seem to profit a lot from existing code, the reuse is
+  nice
+- Ability to slap on `addLabel` where needed without worrying about changing the
+  output format
+
+What did I not like:
+
+- If you want to have many expressions in a single statement, the code does get
+  harder to read (lots of parentheses)
+
+Next time:
+
+- Building a quoted string parser
+- Building a number parser
+- Checking out recursion

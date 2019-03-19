@@ -351,10 +351,12 @@ What I learned so far:
 What did I like:
 
 - So far was easy! Writing these lines of code only took a few minutes. We've
-  spent more time on setup.
+  spent more time on setup
 
 What did I not like:
 
 - Nothing so far
 
-In the next post of this series we will actually start combining parsers!
+Next time:
+
+- Combining parsers into new ones

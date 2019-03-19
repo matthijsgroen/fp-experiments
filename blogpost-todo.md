@@ -11,6 +11,13 @@ It seems the chapters will be:
 
 TODO:
 
+- Add a conclusion section to each post:
+
+  - Short summary of abilities added
+  - What did I learn
+  - What did I like
+  - What did I not like
+
 - Add section to last post to put proper names on things
   - Since a function only relies on its directly provided input, and is not
     allowed to change that input, not handling the result would actually make

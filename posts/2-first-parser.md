@@ -126,8 +126,8 @@ console.log(aParser("bcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpec
 ```
 
 Using the spread operator (`[head, ...tail]`) I would separate the first
-character from the rest, and compare it to the letter "a". The tail is
-automatically transformed into an array of characters.
+character from the rest, and compare it to the letter "a". Notice that the tail
+is automatically transformed into an array of characters.
 
 To change that we could parse more than just the "a", it would be smart to turn
 the character we parse into a function argument:
@@ -246,8 +246,9 @@ const aParser = characterParser("a");
 console.log(aParser("")); // [ Symbol(Failed), "Error parsing 'a':", "Unexpected EOF" ]
 ```
 
-So now I can create a parser for any one character I would like. The next step,
-creating a parser to combine others.
+So now I can create a parser for any one character I would like. The next step
+would be creating a parser that would be a combination of multiple character
+parsers.
 
 But, feeling more confident, it was time to enforce more rules:
 
@@ -334,5 +335,26 @@ So now our eslint rules in the `package.json` look like this:
   }
 }
 ```
+
+# Conclusion
+
+The code so far:
+
+- Our parser is now able to parse one character
+- We've created an input and output format (result and error) for the parser,
+  that other parser should follow as well
+
+What I learned so far:
+
+- Currying
+
+What did I like:
+
+- So far was easy! Writing these lines of code only took a few minutes. We've
+  spent more time on setup.
+
+What did I not like:
+
+- Nothing so far
 
 In the next post of this series we will actually start combining parsers!

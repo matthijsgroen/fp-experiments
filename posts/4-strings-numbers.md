@@ -295,100 +295,61 @@ const choice = reduce(orElse);
 
 ## The number parser
 
-Before we start on the escape characters of our string, here is the complete
-implementation up till now. I moved the order of the implementation around, to
-have the more generic functions at the top, and the more JSON specific functions
-at the bottom.
+Number in JSON have a extensive format:
+
+```ebnf
+number = [ "-" ],
+  ( "0" | ? digit 1-9 ?, { ? digit ? } ),
+  [ ".", ? digit ?, { ? digit ? } ],
+  [ ( "e" | "E" ), [ "+" | "-" ], ? digit ?, { ? digit ? } ];
+```
+
+Lets idenfity the elements:
+
+- An optional sign "-"
+- An integer part
+- An optional fractional part
+- An optional exponent part
+
+A number has a lot of optional parts, and a lot of 'choices' within them.
+
+Time to introduce new parser tools for them:
+
+- AnyOf. Each character in the string is becoming an allowed character. This
+  will help us define 'digits'
+- Opt. If parsing fails, succeed anyway. (Thus making the first parse optional)
 
 ```javascript
-const FAILED = Symbol("Failed");
-const PARSED = 0;
-const REMAINING = 1;
+const anyOf = string => choice([...string].map(characterParser));
+const opt = parser => orElse(parser)(resultParser([]));
+```
 
-const parseError = message => error => [FAILED, message, error];
-const genericParseError = parseError("Error parsing:");
+We can now create the sign parser:
 
-const satisfy = predicate => ([head, ...tail]) =>
-  head
-    ? predicate(head)
-      ? [head, tail]
-      : genericParseError(`Unexpected '${head}'`)
-    : genericParseError("Unexpected EOF");
+```javascript
+const optSign = opt(characterParser("-"));
+```
 
-const onSuccess = result => next =>
-  result[PARSED] !== FAILED ? next(result) : result;
+And the integer parser:
 
-const onFailure = result => next =>
-  result[PARSED] === FAILED ? next(result) : result;
+```javascript
+const zero = characterParser("0");
+const digitOneNine = anyOf("123456789");
+const digit = anyOf("0123456789");
 
-const addLabel = label => parser => stream =>
-  onFailure(parser(stream))(([, , error]) =>
-    parseError(`Error parsing '${label}':`)(error)
-  );
+const nonZeroInt = toString(andThen(digitOneNine)(toString(many(digit))));
+const intPart = orElse(nonZeroInt)(zero);
+```
 
-const characterParser = character =>
-  addLabel(character)(satisfy(c => c === character));
+We use the toString to concat the results together. And we will use `chain` to
+add our individual pieces into a single parser:
 
-const combineResult = resultA => resultB =>
-  onSuccess(resultB)(() => [
-    [resultA[PARSED], resultB[PARSED]],
-    resultB[REMAINING]
-  ]);
+```javascript
+const numberParser = chain([optSign, intPart]);
 
-const andThen = parserA => parserB => stream =>
-  onSuccess(parserA(stream))(result =>
-    combineResult(result)(parserB(result[REMAINING]))
-  );
+console.log(numberParser("-123.45e6"));
+// [ [ '-', '123' ], [ '.', '4', '5', 'e', '6' ] ]
 
-const orElse = parserA => parserB => stream =>
-  onFailure(parserA(stream))(() => parserB(stream));
-
-const resultParser = result => stream => [result, stream];
-
-const mapResult = transform => parser => stream =>
-  onSuccess(parser(stream))(result => [
-    transform(result[PARSED]),
-    result[REMAINING]
-  ]);
-
-const andThenLeft = parserA => parserB =>
-  mapResult(result => result[0])(andThen(parserA)(parserB));
-
-const andThenRight = parserA => parserB =>
-  mapResult(result => result[1])(andThen(parserA)(parserB));
-
-const between = parserLeft => parserRight => parserMiddle =>
-  andThenLeft(andThenRight(parserLeft)(parserMiddle))(parserRight);
-
-const chain = parsers => parsers.reduce((a, b) => andThen(a)(b));
-
-const toList = mapResult(result => [result[0]].concat(result[1]));
-const toString = mapResult(result => result.join(""));
-
-const many = parser => stream =>
-  orElse(toList(andThen(parser)(many(parser))))(resultParser([]))(stream);
-
-const stringParser = string =>
-  addLabel(string)(chain([...string].map(char => characterParser(char))));
-
-const parseStringResult = string => result =>
-  andThenRight(stringParser(string))(resultParser(result));
-
-const nullParser = parseStringResult("null")(null);
-const boolParser = orElse(parseStringResult("true")(true))(
-  parseStringResult("false")(false)
-);
-
-const quoteParser = characterParser('"');
-const stringCharParser = satisfy(c => c !== '"');
-
-const quotedStringParser = between(quoteParser)(quoteParser)(
-  toString(many(stringCharParser))
-);
-
-console.log(nullParser("null")); // [ null, [] ]
-console.log(boolParser("true")); // [ true, [] ]
-console.log(boolParser("false")); // [ false, [] ]
-console.log(quotedStringParser('"test"')); // [ 'test', [] ]
-console.log(quotedStringParser('""')); // [ '', [] ]
+console.log(numberParser("123.45e6"));
+// [ [ [], '123' ], [ '.', '4', '5', 'e', '6' ] ]
 ```

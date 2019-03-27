@@ -5,13 +5,15 @@
   "author": "Matthijs Groen <matthijs@kabisa.nl>",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^5.15.1"
+    "eslint": "^5.15.1",
+    "eslint-plugin-fp-challenge": "^1.0.1-alpha.2"
   },
   "eslintConfig": {
     "parserOptions": {
       "ecmaVersion": 2018
     },
     "extends": "eslint:recommended",
+    "plugins": ["fp-challenge"],
     "env": {},
     "globals": {
       "Symbol": "readonly",
@@ -21,13 +23,31 @@
       "console": "readonly"
     },
     "rules": {
+      "fp-challenge/no-self-reference": "off",
       "no-console": ["off"],
-      "no-use-before-define": ["error", { "functions": true, "classes": true }],
+      "no-use-before-define": [
+        "error",
+        {
+          "functions": true,
+          "classes": true
+        }
+      ],
       "no-eval": ["error"],
       "no-implied-eval": ["error"],
       "no-restricted-globals": ["error", "JSON"],
-      "max-statements": ["error", 1, { "ignoreTopLevelFunctions": false }],
-      "complexity": ["error", { "max": 3 }],
+      "max-statements": [
+        "error",
+        1,
+        {
+          "ignoreTopLevelFunctions": false
+        }
+      ],
+      "complexity": [
+        "error",
+        {
+          "max": 3
+        }
+      ],
       "arrow-body-style": ["error", "as-needed"],
       "no-restricted-syntax": [
         "error",

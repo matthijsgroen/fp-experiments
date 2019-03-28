@@ -35,11 +35,12 @@ While this test for `console.log` is not fool proof, it will start warning about
 // before
 const toList = mapResult(result => [result[0]].concat(result[1]));
 // after
-const toList = mapResult(result => [...result[0], ...result[1]]);
+const toList = mapResult(result => [...[result[0]], ...result[1]]);
 ```
 
-That was not hard, since the spread operator (`...`) will concat the 2 lists for
-us.
+Be sure to wrap `result[0]` into an array. In our parser results, this `toList`
+is to flatten a list that has the form of: `[a, [b, [c, d]]`. So each time it is
+a list being appended to a single value.
 
 ```javascript
 // before
@@ -94,3 +95,118 @@ const anyOf = string => choice([...string].map(characterParser)([...string]));
 // after
 const anyOf = string => choice(map(characterParser)([...string]));
 ```
+
+So that was not that hard, and now we are able to enforce another rule!
+
+Now, onto parsing arrays!
+
+# Parsing an JSON array
+
+[As Scott Wlashin explains in his excellent series](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators-4/#5-parsing-array),
+there is a problem with parsing an array as can be seen in the EBNF notation:
+
+```ebnf
+value = object | array | number | string | "true" | "false" | "null";
+array = "[", [ value, { ",", value } ], "]";
+```
+
+A value could be an `array`, and an array consists of `value`! there is a
+circular reference here. How can you write a parser that needs to parse itself
+as well?
+
+Scott Wlashin fixes this by using a
+[forward declaration](https://en.wikipedia.org/wiki/Forward_declaration). A
+forward declaration is a placeholder, that will be replaced later on.
+
+I tried to follow this pattern in my implementation as well:
+
+```javascript
+const forwardReference = (impl = () => [FAILED, "Unforfilled"]) => [
+  stream => impl(stream),
+  update => (impl = update)
+];
+
+const [valueParser, updateValueParserRef] = forwardReference();
+console.log(valueParser("hello")); // [ Symbol(Failed), 'Unforfilled' ]
+updateValueParserRef(characterParser("h"));
+console.log(valueParser("hello")); // [ 'h', [ 'e', 'l', 'l', 'o' ] ]
+```
+
+The linter didn't complain, my implementation worked, so I was happy! Time to
+start parsing that array!
+
+These are some examples we should be able to parse:
+
+```
+[null, 1, 3  , ]
+[ "string [ , ", false]
+```
+
+As you can see from these examples, in and around the brackets `[]` and the
+seperator `,` we can have all kinds of whitespace that does not matter. So we
+need some way to ignore those:
+
+```javascript
+const whitespace = " \n\t";
+const whitespaceParser = many(anyOf(whitespace));
+
+const ignoreTrailingSpaces = parser => andThenLeft(parser)(whitespaceParser);
+
+const arrayStart = ignoreTrailingSpaces(characterParser("["));
+const arrayEnd = ignoreTrailingSpaces(characterParser("]"));
+const arraySep = ignoreTrailingSpaces(characterParser(","));
+
+console.log(arrayStart("[    null, 1 ]")); // [ '[', [ 'n', 'u', ...
+```
+
+Nice the spaces are ignored and the next character is waiting to be parsed! Now
+to define our array value parser, that makes use of our forward reference:
+
+```javacript
+const arrayValue = ignoreTrailingSpaces(valueParser);
+```
+
+Now we need some parser that can parse a list, using a kind of seperator. By
+combining parsers, we are looking for something like this:
+
+```javascript
+const arrayValues = sepBy(arraySep)(arrayValue);
+```
+
+That ideally would ignore the seperators in the result, and make a flat list of
+the result of the values.
+
+Let's build one:
+
+```javascript
+const sepBy = sepParser => parser => andThen(parser)(sepParser);
+
+const dummyArrayValueParser = sepBy(arraySep)(nullParser);
+console.log(dummyArrayValueParser("null,    null,   null"));
+// [ [ null, ',' ],
+//   [ 'n', 'u', 'l', 'l', ',', ' ', ' ', ' ', 'n', 'u', 'l', 'l' ] ]
+```
+
+After a seperator, we always need to find another element:
+
+```javascript
+const sepBy = sepParser => parser =>
+  andThen(parser)(andThenRight(sepParser)(parser));
+
+const dummyArrayValueParser = sepBy(arraySep)(nullParser);
+console.log(dummyArrayValueParser("null,    null,   null"));
+// [ [ null, null ], [ ',', ' ', ' ', ' ', 'n', 'u', 'l', 'l' ] ]
+```
+
+But those separators and values can be repeated N times:
+
+```javascript
+const sepBy = sepParser => parser =>
+  andThen(parser)(many(andThenRight(sepParser)(parser)));
+
+const dummyArrayValueParser = sepBy(arraySep)(nullParser);
+console.log(dummyArrayValueParser("null,    null,   null"));
+// [ [ null, [ null, null ] ], [] ]
+```
+
+Yes!

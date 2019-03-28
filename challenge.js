@@ -26,9 +26,7 @@ const data = `
   "hints": [
     "Think about function composition and currying",
     "Think about parser combinators",
-    "https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/",
-    "Use a Y combinator",
-    "https://blog.klipse.tech/lambda/2016/08/10/almost-y-combinator-javascript.html"
+    "https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/"
   ],
   "points": {
     "not-trying": 0,

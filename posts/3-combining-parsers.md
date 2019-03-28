@@ -23,10 +23,10 @@ type parser = (stream: stream) => success | failure;
 ## andThen parser
 
 To actually parse more than one character, we want to create structure how the
-parser should continue when succesful or when it fails, by creating 2 more
+parser should continue when successful or when it fails, by creating 2 more
 parsers:
 
-- andThen (to chain a parser after a succesful first parser)
+- andThen (to chain a parser after a successful first parser)
 - orElse (to try an alternative parser after a failed attempt of the first
   parser)
 
@@ -57,7 +57,7 @@ const abParser = andThen(aParser)(bParser);
 console.log(abParser("abcd")); // "???"
 ```
 
-We ar now just testing out the signature. We want to use 2 parsers, and that
+We are now just testing out the signature. We want to use 2 parsers, and that
 would produce a new parser that accepts the stream.
 
 Just starting on running parserA:
@@ -95,7 +95,7 @@ console.log(abParser("iabcd")); // [ Symbol(Failed), "Error parsing 'a':", "Unex
 console.log(abParser("aibcd")); // [ Symbol(Failed), "Error parsing 'b':", "Unexpected 'i'" ]
 ```
 
-Ok the last 2 lines are as expected now. but the first one is incorrect. the
+Ok, the last 2 lines are as expected now. But the first one is incorrect. The
 result of the parse should not be `'b'`, but `['a', 'b']`.
 
 We need to combine the result from parser A with parser B:

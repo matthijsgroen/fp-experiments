@@ -100,7 +100,7 @@ So that was not that hard, and now we are able to enforce another rule!
 
 Now, onto parsing arrays!
 
-# Parsing an JSON array
+## Parsing an JSON array
 
 [As Scott Wlashin explains in his excellent series](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators-4/#5-parsing-array),
 there is a problem with parsing an array as can be seen in the EBNF notation:
@@ -138,7 +138,7 @@ start parsing that array!
 These are some examples we should be able to parse:
 
 ```
-[null, 1, 3  , ]
+[null, 1, 3  , [ true ] ]
 [ "string [ , ", false]
 ```
 
@@ -209,4 +209,235 @@ console.log(dummyArrayValueParser("null,    null,   null"));
 // [ [ null, [ null, null ] ], [] ]
 ```
 
-Yes!
+Yes! now to flatten that list, by using concat:
+
+```javascript
+const sepBy = sepParser => parser =>
+  toList(andThen(parser)(many(andThenRight(sepParser)(parser))));
+```
+
+But what if the array would be empty?
+
+```javascript
+const dummyArrayValueParser = sepBy(arraySep)(nullParser);
+console.log(dummyArrayValueParser(""));
+// [ Symbol(Failed), "Error parsing 'null':", 'Unexpected EOF' ]
+
+console.log(dummyArrayValueParser("null"));
+// [ [ null ], [] ]
+```
+
+So our implementation would require at least one value. So we rename the
+function to `sepBy1` and create a new one that would accept 'no values'
+
+```javascript
+const sepBy1 = sepParser => parser =>
+  toList(andThen(parser)(many(andThenRight(sepParser)(parser))));
+
+const sepBy = sepParser => parser =>
+  orElse(sepBy1(sepParser)(parser))(resultParser([]));
+```
+
+So now our array parser is complete!
+
+```javascript
+const arrayValues = sepBy(arraySep)(arrayValue);
+const arrayParser = addLabel("array")(
+  between(arrayStart)(arrayEnd)(arrayValues)
+);
+```
+
+We can test it out by fulfilling our forward reference:
+
+```javascript
+updateValueParserRef(
+  choice([
+    nullParser,
+    boolParser,
+    numberParser,
+    quotedStringParser,
+    arrayParser
+  ])
+);
+
+// parsing our examples:
+console.log(valueParser("[null, 1, 3  , [ true ] ]"));
+// [ [ null, 1, 3, [ true ] ], [] ]
+
+console.log(valueParser('[ "string [ , ", false]'));
+// [ [ 'string [ , ', false ], [] ]
+```
+
+We can now already parse quite some JSON. The only thing missing right now, is
+`object`s.
+
+## Parsing JSON objects
+
+The EBNF definition for a JSON object is:
+
+```ebnf
+object = "{", [ string, ":", value, { ",", string, ":", value } ], "}";
+```
+
+So, "Between" brackets, are key-value pairs "seperated" by a comma. The
+key-value pair is a String, ":", value. I think we already have all ingredients
+for this one! Maybe we need to add some code to produce the end result, but
+parsing wise we should already be close!
+
+```javascript
+const objectStart = ignoreTrailingSpaces(characterParser("{"));
+const objectEnd = ignoreTrailingSpaces(characterParser("}"));
+const objectPairSep = ignoreTrailingSpaces(characterParser(","));
+const objectKeyValSep = ignoreTrailingSpaces(characterParser(":"));
+const objectKey = ignoreTrailingSpaces(quotedStringParser);
+const objectValue = ignoreTrailingSpaces(valueParser);
+const objectKeyValue = andThen(andThenLeft(objectKey)(objectKeyValSep))(
+  objectValue
+);
+
+const objectParser = between(objectStart)(objectEnd)(
+  sepBy(objectPairSep)(objectKeyValue)
+);
+
+console.log(objectParser('{ "hello": "world", "fp": true }'));
+// [ [ [ 'hello', 'world' ], [ 'fp', true ] ], [] ]
+```
+
+The default result is already a list of key-value pairs. Now to put them into an
+object:
+
+```javascript
+const toObject = doReduce(result => ([key, value]) => ({
+  ...result,
+  [key]: value
+}))({});
+
+const objectParser = mapResult(toObject)(
+  between(objectStart)(objectEnd)(sepBy(objectPairSep)(objectKeyValue))
+);
+
+console.log(objectParser('{ "hello": "world", "fp": true }'));
+// [ { hello: 'world', fp: true }, [] ]
+```
+
+Now to update our value choice, so that objects are included:
+
+```javascript
+updateValueParserRef(
+  choice([
+    nullParser,
+    boolParser,
+    numberParser,
+    quotedStringParser,
+    arrayParser,
+    objectParser // new!
+  ])
+);
+
+const jsonParser = stream =>
+  onSuccess(andThenRight(whitespaceParser)(valueParser)(stream))(
+    ([result, remaining]) =>
+      remaining.length > 0
+        ? [FAILED, "Unexpected characters:", remaining]
+        : result
+  );
+
+// data is our challenge data, see post 1
+console.log(jsonParser(data)); // Works!
+```
+
+I added a `jsonParser` to check after parsing if there are no remaining
+characters left. If there are, return an error. If not, return the parsed
+result.
+
+Now I only need to build our `get` function to get value from our data, to
+complete the challenge, and we need to check if we can tick a box for all the
+rules we applied.
+
+## Getting data out of our JSON structure
+
+In the definition of the challenge, there were 3 calls that we should be able to
+do:
+
+```json
+{
+  "goals": [
+    "get(data)(\"using.disallowed.0\") should result in \"No dependencies\"",
+    "get(data)(\"points.full-json\") should result in 1000",
+    "get(data)(\"jsonTypes.2\") should result in false"
+  ]
+}
+```
+
+The thing is, the argument from the `get` is also a string that needs to be
+parsed! (separted by `.` dots).
+
+And we made just the tools to do that...
+
+```javascript
+const pathElementParser = toString(some(satisfy(c => c !== ".")));
+const split = sepBy(characterParser("."))(pathElementParser);
+
+const get = data => path =>
+  doReduce(result => item => result && result[item])(data)(split(path)[0]);
+
+const jsonGet = get(parsedData);
+
+console.log(jsonGet("using.disallowed.0"));
+console.log(jsonGet("points.full-json"));
+console.log(jsonGet("jsonTypes.2"));
+```
+
+Challenge completed!
+
+But there were some things still bothering me. I did an assignment in the
+forward reference, and that felt like cheating. But first lets see how we score
+on the restrictions we applied, by looking at the defined ESLint rules of our
+`package.json`...
+
+```json
+{
+  "eslintConfig": {
+    "globals": {
+      "Symbol": "readonly",
+      "Array": "readonly",
+      "String": "readonly",
+      "Number": "readonly",
+      "console": "readonly"
+    },
+    "rules": {
+      "no-console": "off",
+      "no-use-before-define": "error",
+      "no-eval": "error",
+      "no-implied-eval": "error",
+      "no-restricted-globals": ["error", "JSON"],
+      "max-statements": ["error", 1, { "ignoreTopLevelFunctions": false }],
+      "complexity": ["error", { "max": 3 }],
+      "arrow-body-style": ["error", "as-needed"],
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "FunctionExpression",
+          "message": "Please use Lambda notation () =>"
+        },
+        {
+          "selector": "IfStatement",
+          "message": "Try using ternary operator: true ? 1 : 2"
+        },
+        {
+          "selector": "VariableDeclaration[kind=let],VariableDeclaration[kind=var]",
+          "message": "Only use constants"
+        },
+        {
+          "selector": "ArrowFunctionExpression[params.length > 1]",
+          "message": "Only 1 argument allowed. Please use currying"
+        },
+        {
+          "selector": "CallExpression[callee.type=MemberExpression][callee.property.name!='log']",
+          "message": "Not allowed to call object members, except console.log()"
+        }
+      ]
+    }
+  }
+}
+```

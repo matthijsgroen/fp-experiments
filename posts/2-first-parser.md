@@ -60,7 +60,7 @@ Additions to the eslint config:
       "console": "readonly"
     },
     "rules": {
-      "no-console": ["off"]
+      "no-console": "off"
     }
   }
 }
@@ -75,9 +75,9 @@ I even added some more rules to prevent cheating:
 {
   "eslintConfig": {
     "rules": {
-      "no-use-before-define": ["error", { "functions": true, "classes": true }],
-      "no-eval": ["error"],
-      "no-implied-eval": ["error"],
+      "no-use-before-define": "error",
+      "no-eval": "error",
+      "no-implied-eval": "error",
       "no-restricted-globals": ["error", "JSON"]
     }
   }
@@ -308,10 +308,10 @@ So now our eslint rules in the `package.json` look like this:
       "console": "readonly"
     },
     "rules": {
-      "no-console": ["off"],
-      "no-use-before-define": ["error", { "functions": true, "classes": true }],
-      "no-eval": ["error"],
-      "no-implied-eval": ["error"],
+      "no-console": "off",
+      "no-use-before-define": "error",
+      "no-eval": "error",
+      "no-implied-eval": "error",
       "no-restricted-globals": ["error", "JSON"],
       "max-statements": ["error", 1, { "ignoreTopLevelFunctions": false }],
       "complexity": ["error", { "max": 3 }],

@@ -441,3 +441,43 @@ on the restrictions we applied, by looking at the defined ESLint rules of our
   }
 }
 ```
+
+I was checking for usage of `const`, but I never assigned rules that assignments
+where forbidden. I was also missing my "No self referencing recursion" I wanted
+to try (see first post).
+
+Time to extend the linting rules some more!
+
+## Conclusion
+
+The code so far:
+
+- A full JSON parser (only skipped hex chars in strings)
+- A function to grap values from the JSON structure
+
+What I learned so far:
+
+- Still the code is more the tools to parse than a specific implementation. I
+  like this approach, it makes most of the code re-usable. The 'get' function is
+  an example of reuse.
+- I followed the original blog of parser combinators quite literally. It helped
+  a great deal in the implementation, but the forward reference felt weird. I
+  had find a way to do it without an assignment in there.
+
+What did I like:
+
+- I finished the parser! Everything worked. I never though I would be able to
+  implement it. So far I spend 2 evenings on it.
+- It felt nice to break loose from the functions already provided in the
+  language, and do an own implementation for it. Its not something you would do
+  in production code, but for a challenge like this, it is cool to also do the
+  most basics of tool building.
+
+What did I not like:
+
+- The forward reference. I had to find a better way to do it.
+
+Next time:
+
+- Removing the self referencing recursion
+- Fixing the forward reference

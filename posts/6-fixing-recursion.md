@@ -149,4 +149,60 @@ console.log(fibonacci2(fibonacci2)(6));
 ```
 
 Ouch, the sub calls don't know the change in signature, so we get the function
-code itself concatenated
+code itself concatenated.
+
+Let's check out that first part of the Y-combinator code.
+
+`x => x(x)`
+
+So its a function, where 'x' goes in, and gets executed with 'x'.
+
+Lets just investigate that one:
+
+```javascript
+const refProducer = ref => ref(ref);
+```
+
+Since the ref we pass in gets executed, we know we have to put a function in
+there.
+
+Lets put a function in that would produce `"a"`.
+
+```javascript
+console.log(refProducer(() => "a")); // "a"
+```
+
+ok, so what the function outputs, wil also be the result of the 'refProducer'
+and the function we pass in, will be executed. But what does the function
+receive as input? Lets investigate
+
+```javascript
+console.log(refProducer(f => "a, " + String(f)));
+// a, f => "a, " + String(f)
+```
+
+Ok, that's weird. We get "a, " but also our own function back. Our function just
+received itself? What would happen if we would execute that function?
+
+```javascript
+const x = f => "a, " + f("b");
+console.log(refProducer(x));
+// TypeError: f is not a function
+```
+
+What happens is: Our function `x` got executed with `f`. but in `x`, `f` gets
+executed with `"b"` But in that call the string `"b"` is tried to be called with
+`"b"` again, and that breaks. So we can only call the received `f` with another
+function.
+
+So my guess is, this `x => x(x)` will allow us to trigger a recursion. Let's try
+to build a fibonacci number calculator with this mechanic:
+
+```javascript
+const fibonacciRecursive = amount => refProducer(f => `n${amount}, ${f}`);
+console.log(fibonacciRecursive(6));
+// n6, f => `n${amount}, ${f}`
+```
+
+Ok we still didn't execute this `f` thing, so this is basically the same as the
+`a, f => "a, " + String(f)` response we got earlier

@@ -23,6 +23,7 @@
       "console": "readonly"
     },
     "rules": {
+      "fp-challenge/no-self-reference": "error",
       "no-console": "off",
       "no-use-before-define": "error",
       "no-eval": "error",
@@ -48,6 +49,10 @@
         {
           "selector": "ArrowFunctionExpression[params.length > 1]",
           "message": "Only 1 argument allowed. Please use currying"
+        },
+        {
+          "selector": "AssignmentPattern,AssignmentExpression",
+          "message": "State must be immutable"
         },
         {
           "selector": "CallExpression[callee.type=MemberExpression][callee.property.name!='log']",

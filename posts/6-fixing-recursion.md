@@ -199,10 +199,296 @@ So my guess is, this `x => x(x)` will allow us to trigger a recursion. Let's try
 to build a fibonacci number calculator with this mechanic:
 
 ```javascript
-const fibonacciRecursive = amount => refProducer(f => `n${amount}, ${f}`);
-console.log(fibonacciRecursive(6));
+const fibonacci = amount => refProducer(f => `n${amount}, ${f}`);
+console.log(fibonacci(6));
 // n6, f => `n${amount}, ${f}`
 ```
 
-Ok we still didn't execute this `f` thing, so this is basically the same as the
-`a, f => "a, " + String(f)` response we got earlier
+Ok we still didn't execute the provided argument, so this is basically the same
+as the `a, f => "a, " + String(f)` response we got earlier.
+
+Lets try to execute it with our `fibonacci2` function:
+
+```javascript
+const fibonacci2 = fibonacci => n =>
+  n < 2 ? 1 : fibonacci(n - 1) + fibonacci(n - 2);
+
+const fibonacciRecursive = fibonacci => amount =>
+  refProducer(f => `n${amount}, ${f}, ${fibonacci(amount)}`);
+
+console.log(fibonacciRecursive(fibonacci2)(6));
+// n6, f => `n${amount}, ${f}, ${fibonacci(amount)}`, n =>
+//  n < 2 ? 1 : fibonacci(n - 1) + fibonacci(n - 2)
+```
+
+We provided the fibonacci2 method into our recursive function. And we see its
+contents in the output. Lets try to call this function with a callback, and
+output the argument it supplies.
+
+```javascript
+const fibonacciRecursive = fibonacci => amount =>
+  refProducer(
+    f =>
+      `n${amount}, ${f}, ${fibonacci(nextAmount => console.log(nextAmount))(
+        amount
+      )}`
+  );
+console.log(fibonacciRecursive(fibonacci2)(6));
+// 5
+// 4
+// n6, f =>
+//      `n${amount}, ${f}, ${fibonacci(nextAmount => console.log(nextAmount))(
+//        amount
+//      )}`, NaN
+```
+
+This output is actually pretty instresting. The input argument is '6'. The
+outputs are 5 and 4, the nested calls respecively. The result of both calls
+added resulted in an `NaN` since we where adding `undefined + undefined` (the
+result of a `console.log`). It seems we are on the right track to make this
+thing work.
+
+Instead of logging the `nextAmount`, lets wrap our own function again and pass
+this `nextAmount` through:
+
+```javascript
+const fibonacciRecursive = fibonacci => amount =>
+  refProducer(
+    f =>
+      `n${amount}, ${f}, ${fibonacci(nextAmount => f(f)(nextAmount))(amount)}`
+  );
+console.log(fibonacciRecursive(fibonacci2)(6));
+// RangeError: Maximum call stack size exceeded
+```
+
+Since our main function is now producing a string, it will never match with our
+`n <= 2` conditoin to stop the recursoin. Furthermore, the `amount` passed in is
+locked in the implementation, keeping the nested calls for each iteration
+actually on `6`, even if the nextAmount is being lowered. Lets remove explicit
+amount and let `currying` do its work for us:
+
+```javascript
+const fibonacciRecursive = fibonacci =>
+  refProducer(f => fibonacci(nextAmount => f(f)(nextAmount)));
+console.log(fibonacciRecursive(fibonacci2)(6)); // 13
+```
+
+nice! lets try it with another recursive function, the factorial. a factorial
+will multiply itself with `n - 1`. resulting in:
+
+```javascript
+factorial(1); // 1 = 1
+factorial(2); // 1 * 2 = 2
+factorial(3); // 1 * 2 * 3 = 6
+factorial(4); // 1 * 2 * 3 * 4 = 24
+```
+
+This is the implementation, receiving an `f` for the recursive calls:
+
+```javascript
+const factorial = f => n => (n === 0 ? 1 : n * f(n - 1));
+console.log(fibonacciRecursive(factorial)(1)); // 1
+console.log(fibonacciRecursive(factorial)(2)); // 2
+console.log(fibonacciRecursive(factorial)(3)); // 6
+console.log(fibonacciRecursive(factorial)(4)); // 24
+console.log(fibonacciRecursive(factorial)(5)); // 120
+```
+
+You can see the `fibonacciRecursive` is actually not limited to calculating
+fibonacci. You can create all kinds of recursive constructions with it. Lets
+refactor it for a more general purpose:
+
+```javascript
+const refProducer = ref => ref(ref);
+
+const fibonacciRecursive = fibonacci =>
+  refProducer(f => fibonacci(nextAmount => f(f)(nextAmount)));
+```
+
+By renaming the passed in function to `f`, and the internal `f` to `y`:
+
+```javascript
+const refProducer = ref => ref(ref);
+
+const fibonacciRecursive = f =>
+  refProducer(y => f(nextAmount => y(y)(nextAmount)));
+```
+
+And embed our ref producer:
+
+```javascript
+const fibonacciRecursive = f =>
+  (ref => ref(ref))(y => f(nextAmount => y(y)(nextAmount)));
+```
+
+And now rename `ref` to `x`, and `nextAmount` to `x` since it a different scope:
+
+```javascript
+const fibonacciRecursive = f => (x => x(x))(y => f(x => y(y)(x)));
+```
+
+And there it is, our "Y-combinator".
+
+Time to put it in our JSON implementation. Lets start with the reducers
+
+Before:
+
+```javascript
+const doReduce = reducer => start => ([head, ...tail]) =>
+  head ? doReduce(reducer)(reducer(start)(head))(tail) : start;
+
+const reduce = reducer => ([head, ...tail]) => doReduce(reducer)(head)(tail);
+const reduceStart = reducer => start => tail => doReduce(reducer)(start)(tail);
+
+console.log(reduce(r => e => r + e)([1, 2, 3, 4])); // 10
+console.log(reduceStart(r => e => r + e)(5)([1, 2, 3, 4])); // 15
+```
+
+Introduce the 'internal' `doReduce` as 'f':
+
+```javascript
+const Y = f => (x => x(x))(y => f(x => y(y)(x)));
+
+const doReduce = f => reducer => start => ([head, ...tail]) =>
+  head ? f(reducer)(reducer(start)(head))(tail) : start;
+
+const reduce = reducer => ([head, ...tail]) => Y(doReduce)(reducer)(head)(tail);
+const reduceStart = reducer => start => tail =>
+  Y(doReduce)(reducer)(start)(tail);
+```
+
+Since the 'reducer' does not change between calls, we can take it out from the
+wrapping:
+
+```javascript
+const Y = f => (x => x(x))(y => f(x => y(y)(x)));
+
+const doReduce = reducer => f => start => ([head, ...tail]) =>
+  head ? f(reducer(start)(head))(tail) : start;
+
+const reduce = reducer => ([head, ...tail]) => Y(doReduce(reducer))(head)(tail);
+const reduceStart = reducer => start => tail =>
+  Y(doReduce(reducer))(start)(tail);
+```
+
+And because of currying, we can simplify the `reduceStart`
+
+```javascript
+const Y = f => (x => x(x))(y => f(x => y(y)(x)));
+
+const doReduce = reducer => f => start => ([head, ...tail]) =>
+  head ? f(reducer(start)(head))(tail) : start;
+
+const reduce = reducer => ([head, ...tail]) => Y(doReduce(reducer))(head)(tail);
+const reduceStart = reducer => Y(doReduce(reducer));
+```
+
+When making these adjustments, we need to update other functions that use the
+`doReduce` as well, such as `get` and `getObject`.
+
+The `map` function:
+
+```javascript
+const map = transform =>
+  Y(f => ([head, ...tail]) => (head ? [transform(head), ...f(tail)] : []));
+```
+
+The `many` function:
+
+```javascript
+const many = parser =>
+  Y(f => stream =>
+    orElse(toList(andThen(parser)(f)))(resultParser([]))(stream)
+  );
+```
+
+Well that solved the "Recursion using self reference".
+
+I thought this was the really complex stuff. Learning the mechanic behind the
+Y-Combinator was pretty hard, but at least applying it was actually pretty
+simple.
+
+## Fixing the forward reference
+
+Somehow I had real trouble replacing the forward reference. I thought, if it
+would be possible to do something smart for recursion, it would certainly be
+possible to rewrite the forward reference with some smart functions. I spent
+hours and hours trying, but nothing worked. The next morning I finally realized
+I was doing it wrong. It was not able to fix the forward reference. Because the
+forward reference itself was wrong.
+
+Lets look at that code again:
+
+```javascript
+const forwardReference = (impl = () => [FAILED, "Unforfilled"]) => [
+  stream => impl(stream),
+  update => (impl = update)
+];
+
+const [valueParser, updateValueParserRef] = forwardReference();
+console.log(valueParser("hello")); // [ Symbol(Failed), 'Unforfilled' ]
+updateValueParserRef(characterParser("h"));
+console.log(valueParser("hello")); // [ 'h', [ 'e', 'l', 'l', 'o' ] ]
+```
+
+This is what wrong. The whole idea of FP, is no side-effects. If you would call
+a function with an argument today, it should give the same result when you would
+call the function with the same argument tomorrow. And the forward reference
+construction was breaking that.
+
+Instead I should just delete the forward reference code, and check where the
+problem really was. This was the first line to throw an error. The `valueParser`
+was no longer defined.
+
+```javascript
+const arrayValue = ignoreTrailingSpaces(valueParser);
+const arrayValues = sepBy(arraySep)(arrayValue);
+const arrayParser = addLabel("array")(
+  between(arrayStart)(arrayEnd)(arrayValues)
+);
+```
+
+Instead of defining it, I just postponed defining it by wrapping it in a
+function and push the value parser in:
+
+```javascript
+const arrayValue = valueParser => ignoreTrailingSpaces(valueParser);
+const arrayValues = valueParser => sepBy(arraySep)(arrayValue(valueParser));
+const arrayParser = valueParser =>
+  addLabel("array")(between(arrayStart)(arrayEnd)(arrayValues(valueParser)));
+```
+
+Now the same for object. Just pushing the problem into the future.
+
+```javascript
+const objectValue = valueParser => ignoreTrailingSpaces(valueParser);
+const objectKeyValue = valueParser =>
+  andThen(andThenLeft(objectKey)(objectKeyValSep))(objectValue(valueParser));
+const objectParser = valueParser =>
+  mapResult(toObject)(
+    between(objectStart)(objectEnd)(
+      sepBy(objectPairSep)(objectKeyValue(valueParser))
+    )
+  );
+```
+
+And now for the value parser itself:
+
+```javascript
+const valueParser = Y(f =>
+  choice([
+    nullParser,
+    boolParser,
+    numberParser,
+    quotedStringParser,
+    arrayParser(f),
+    objectParser(f)
+  ])
+);
+```
+
+In the end, this solution was really, really easy. I was just trying to fix the
+wrong problem. By using currying I could just push the problem forwar until all
+the ingredients where at the right place.
+
+## Conclusion

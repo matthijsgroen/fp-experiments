@@ -1,29 +1,32 @@
 const fibonacci = n => (n < 2 ? 1 : fibonacci(n - 1) + fibonacci(n - 2));
 
-console.log(fibonacci(1)); // 1
-console.log(fibonacci(2)); // 2
-console.log(fibonacci(3)); // 3
-console.log(fibonacci(4)); // 5
-console.log(fibonacci(5)); // 8
-console.log(fibonacci(6)); // 13
+//console.log(fibonacci(1)); // 1
+//console.log(fibonacci(2)); // 2
+//console.log(fibonacci(3)); // 3
+//console.log(fibonacci(4)); // 5
+//console.log(fibonacci(5)); // 8
+//console.log(fibonacci(6)); // 13
 
 // lets pass in fibonacci, so that it doesn't reference the global one
 const fibonacci2 = fibonacci => n =>
   n < 2 ? 1 : fibonacci(n - 1) + fibonacci(n - 2);
 
-console.log(fibonacci2(fibonacci2)(6)); // ouch, the sub calls don't know the
+//console.log(fibonacci2(fibonacci2)(1)); // 1
+//console.log(fibonacci2(fibonacci2)(6)); // ouch, the sub calls don't know the
 // change in signature, so we get the function itself concatenated
 
 const refProducer = ref => ref(ref);
 
-console.log(refProducer(f => "a, " + String(f))); // a, f => "a, " + String(f)
+//console.log(refProducer(() => "a ")); // a, f => "a, " + String(f)
+//console.log(refProducer(f => "a, " + String(f))); // a, f => "a, " + String(f)
+//console.log(refProducer(f => "a, " + f("b"))); // TypeError: f is not a function
 
 const fibonacciRecursive = amount => refProducer(f => `n${amount}, ${f}`);
-console.log(fibonacciRecursive(6));
+//console.log(fibonacciRecursive(6));
 
 const fibonacciRecursive2 = fibonacci => amount =>
   refProducer(f => `n${amount}, ${f}, ${fibonacci(amount)}`);
-console.log(fibonacciRecursive2(fibonacci2)(6));
+//console.log(fibonacciRecursive2(fibonacci2)(6));
 
 const fibonacciRecursive3 = fibonacci => amount =>
   refProducer(

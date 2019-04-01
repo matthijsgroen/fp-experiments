@@ -53,18 +53,15 @@ const data = `
 
 const Y = f => (x => x(x))(x => f(y => x(x)(y)));
 
-const applyMap = transform => f => ([head, ...tail]) =>
-  head ? [transform(head), ...f(tail)] : [];
-
-const map = transform => Y(applyMap(transform));
+const map = transform =>
+  Y(f => ([head, ...tail]) => (head ? [transform(head), ...f(tail)] : []));
 
 const applyReduce = reducer => f => start => ([head, ...tail]) =>
   head ? f(reducer(start)(head))(tail) : start;
 
 const reduce = reducer => ([head, ...tail]) =>
   Y(applyReduce(reducer))(head)(tail);
-
-const reduceWithStart = reducer => head => Y(applyReduce(reducer))(head);
+const reduceWithStart = reducer => Y(applyReduce(reducer));
 
 const concat = list1 => list2 => [...list1, ...list2];
 
@@ -141,9 +138,10 @@ const anyOf = string => choice(map(characterParser)([...string]));
 const sequence = string => chain(map(characterParser)([...string]));
 const toList = mapResult(result => concat([result[0]])(result[1]));
 
-const applyMany = parser => f => stream =>
-  orElse(toList(andThen(parser)(f)))(resultParser([]))(stream);
-const many = parser => Y(applyMany(parser));
+const many = parser =>
+  Y(f => stream =>
+    orElse(toList(andThen(parser)(f)))(resultParser([]))(stream)
+  );
 
 const some = parser => toList(andThen(parser)(many(parser)));
 const opt = parser => orElse(parser)(resultParser([]));
@@ -249,17 +247,16 @@ const objectParser = valueParser =>
     )
   );
 
-const applyValueParser = valueParser =>
+const valueParser = Y(f =>
   choice([
     nullParser,
     boolParser,
     numberParser,
     quotedStringParser,
-    arrayParser(valueParser),
-    objectParser(valueParser)
-  ]);
-
-const valueParser = Y(applyValueParser);
+    arrayParser(f),
+    objectParser(f)
+  ])
+);
 
 const jsonParser = stream =>
   onSuccess(andThenRight(whitespaceParser)(valueParser)(stream))(

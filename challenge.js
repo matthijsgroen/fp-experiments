@@ -139,8 +139,8 @@ const sequence = string => chain(map(characterParser)([...string]));
 const toList = mapResult(result => concat([result[0]])(result[1]));
 
 const many = parser =>
-  Y(f => stream =>
-    orElse(toList(andThen(parser)(f)))(resultParser([]))(stream)
+  Y(f =>
+    orElse(toList(andThen(parser)(f)))(resultParser([]))
   );
 
 const some = parser => toList(andThen(parser)(many(parser)));

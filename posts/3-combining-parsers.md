@@ -8,7 +8,7 @@ create more semantical constructions.
 Since I have added a 'single statement' rule, my implementation will start to
 deviate from the one in
 [the parser combinators blogpost](https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/).
-For more background of parser combinators, please checkout this great post by
+For more background on parser combinators, please checkout this great post by
 Scott Wlaschin.
 
 We established a signature for our parser:
@@ -288,7 +288,7 @@ console.log(nullParser("text")); // [ Symbol(Failed), "Error parsing 'n':", "Une
 ```
 
 Yes! We did a lot of actions here and it would be great to allow reuse by
-refactoring. First: Changing the result of a parser (what `thenRight` does)
+refactoring. First: Changing the result of a parser (what `andThenRight` does)
 
 ```javascript
 const mapResult = transform => parser => stream =>
@@ -366,9 +366,9 @@ const stringParser = string =>
 console.log(boolParser("fase rest")); // [ Symbol(Failed), "Error parsing 'false':", "Unexpected 's'" ]
 ```
 
-So we have nice messages as well. The composability of the functions really seem
+So we have nice messages as well. The composability of the functions really seems
 to pay off. The JSON parser seems to come to shape nicely. There are some things
-still bothering about this implementation though and that is that using
+still bothering me about this implementation though and that is that using
 JavaScripts own `.map` and `.reduce` seem out of place. But we will first try to
 get the JSON parser complete, and then look into those functions.
 
@@ -458,9 +458,9 @@ What I learned so far:
 
 What did I like:
 
-- Its fun building a parser this way
+- It's fun building a parser this way
 - Composition feels powerful
-- Creating new features seem to profit a lot from existing code, the reuse is
+- Creating new features seems to profit a lot from existing code, the reuse is
   nice
 - Ability to slap on `addLabel` where needed without worrying about changing the
   output format

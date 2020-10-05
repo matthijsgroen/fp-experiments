@@ -414,7 +414,7 @@ Somehow I had real trouble replacing the forward reference. I thought, if it
 would be possible to do something smart for recursion, it would certainly be
 possible to rewrite the forward reference with some smart functions. I spent
 hours and hours trying, but nothing worked. The next morning I finally realized
-I was doing it wrong. It was not able to fix the forward reference. Because the
+I was doing it wrong. It was not able to fix the forward reference, because the
 forward reference itself was wrong.
 
 Lets look at that code again:
@@ -488,7 +488,7 @@ const valueParser = Y(f =>
 ```
 
 In the end, this solution was really, really easy. I was just trying to fix the
-wrong problem. By using currying I could just push the problem forwar until all
-the ingredients where at the right place.
+wrong problem. By using currying I could just push the problem forward until all
+the ingredients were at the right place.
 
 ## Conclusion

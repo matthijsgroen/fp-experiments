@@ -291,7 +291,7 @@ const chain = reduce(andThen);
 const choice = reduce(orElse);
 ```
 
-`:mindblown:`
+🤯
 
 ## The Number parser
 

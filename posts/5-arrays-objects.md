@@ -162,7 +162,7 @@ console.log(arrayStart("[    null, 1 ]")); // [ '[', [ 'n', 'u', ...
 Nice the spaces are ignored and the next character is waiting to be parsed! Now
 to define our array value parser, that makes use of our forward reference:
 
-```javacript
+```javascript
 const arrayValue = ignoreTrailingSpaces(valueParser);
 ```
 
@@ -467,7 +467,7 @@ What I learned so far:
 What did I like:
 
 - I finished the parser! Everything worked. I never though I would be able to
-  implement it. So far I spend 2 evenings on it.
+  implement it. So far I spent 2 evenings on it.
 - It felt nice to break loose from the functions already provided in the
   language, and do an own implementation for it. Its not something you would do
   in production code, but for a challenge like this, it is cool to also do the

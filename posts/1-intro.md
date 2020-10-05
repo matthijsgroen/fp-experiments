@@ -192,12 +192,12 @@ const data = `
       "Ternary operator true ? a : b"
     ],
     "disallowed": [
-      "No dependencies",
+      "Dependencies",
       "Recursion to own function",
-      "No JSON.parse",
+      "JSON.parse",
       "Usage of 'if'",
       "Usage of for/while loops",
-      "No host object functions (.split, .map, .reduce, etc)",
+      "Host object functions (.split, .map, .reduce, etc)",
       "Multiple statements in a lambda"
     ]
   },

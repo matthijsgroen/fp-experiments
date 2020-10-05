@@ -8,6 +8,7 @@ It seems the chapters will be:
 6. Fixing the cheats
 7. Performance
 8. Conclusion
+9. The typescript version
 
 TODO:
 

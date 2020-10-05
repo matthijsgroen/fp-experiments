@@ -6,7 +6,13 @@
   "license": "MIT",
   "devDependencies": {
     "eslint": "^5.15.1",
-    "eslint-plugin-fp-challenge": "^1.0.1-alpha.2"
+    "eslint-plugin-fp-challenge": "^1.0.1-alpha.2",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.2"
+  },
+  "scripts": {
+    "start": "node javascript/challenge.js",
+    "start:ts": "ts-node typescript/index.ts"
   },
   "eslintConfig": {
     "parserOptions": {

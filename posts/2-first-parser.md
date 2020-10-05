@@ -11,7 +11,7 @@ yarn add eslint --dev
 > eslint is a linting tool for ECMAScript, where you can define your own rules
 > of what you consider to be "good" code.
 
-Now I added eslint, I could add custom rules, by updating my just generated
+Now that I added eslint, I could add custom rules, by updating my just generated
 `package.json` file:
 
 ```json
@@ -38,11 +38,11 @@ In eslint, you normally specify an `env` in which the code will be run, like a
 `browser`, `node` or `worker`. This will automatically allow a lot of syntax
 specific to such an environment. By not specifying an `env`, I was restricting a
 lot of standard JS. But in this case even too much. Type objects like `String`,
-`Array` and `Number`. Where also disabled, and `console.log` was also not
+`Array` and `Number` were also disabled, and `console.log` was also not
 allowed.
 
 (normally having no `console.log` is a good thing, it prevents debug or other
-info to remain in your code when it is no longer needed).
+info from remaining in your code when it is no longer needed).
 
 But since I was not exporting anything from my file, I needed a way to see some
 output of my code. So I enabled `console.log` manually.
@@ -168,7 +168,7 @@ This would actually mean that our function would not be "data" in, "data" out
 like I was used to. It would be "data" in, "function" out. Like a function
 factory.
 
-A mathematic example:
+A mathematical example:
 
 ```javascript
 const add = (a, b) => a + b;
@@ -217,7 +217,7 @@ const characterParser = character => ([head, ...tail]) =>
     ? head === character
       ? [head, tail]
       : [FAILED, `Error parsing '${character}':`, `Unexpected '${head}'`]
-    : [FAILED, "Error parsing: '${character}'", "Unexpected EOF"];
+    : [FAILED, `Error parsing: '${character}':`, "Unexpected EOF"];
 
 const aParser = characterParser("a");
 

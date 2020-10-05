@@ -144,7 +144,7 @@ ruleTester.run("fp-challenge", rule, {
 Before I got the proper error message.
 
 The other pitfall is if you want the user to allow specifying options for your
-rule. You need to provide a JSON schema to allow valdiation for these options.
+rule, you need to provide a JSON schema to allow valdiation for these options.
 But the problem is, you need to restart the tests before the provided JSON
 schema is reparsed. So if you run the tests using `yarn test --watch` you keep
 wondering why tests keep failing or keep passing, and not pick up the changes

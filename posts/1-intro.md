@@ -50,10 +50,10 @@ Data in, data out. Just functions, and functions calling other functions.
 No hidden dependencies, or object hierarchies.
 
 It makes refactoring or moving code around a breeze. Now not only the views
-where composable, the whole software became composable.
+were composable, the whole software became composable.
 
 ```jsx
-<HeaderBar theme={"blue"}>
+<HeaderBar theme="blue">
   <SiteMenu />
   <UserProfile user={user} />
 </HeaderBar>
@@ -142,7 +142,7 @@ understand all "the fuss".
 But there is a big gap coming from an object oriented world, where language were
 designed to be easily readable and code was written as if they where stories,
 and going to a world where stuff is expressed as math and concepts with strange
-names are explained by even more strange names.
+names are explained by even stranger names.
 
 ```haskell
 fmap :: (a -> b) -> f a -> f b
@@ -229,7 +229,7 @@ const data = `
  */
 ```
 
-Would I be able to create purely functional code to parse the JSON defined?
+Would I be able to create purely functional code to parse the defined JSON?
 
 Yes, I even added a `Recursion to own function` in there, after watching
 ["The next great functional programming language"](https://www.youtube.com/watch?v=buQNgW-voAg)

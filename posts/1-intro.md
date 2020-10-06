@@ -49,8 +49,8 @@ Data in, data out. Just functions, and functions calling other functions.
 
 No hidden dependencies, or object hierarchies.
 
-It makes refactoring or moving code around a breeze. Now not only the views
-were composable, the whole software became composable.
+It makes refactoring or moving code around a breeze. Now not only the views were
+composable, the whole software became composable.
 
 ```jsx
 <HeaderBar theme="blue">
@@ -89,9 +89,15 @@ class Person {
     this.age = age;
   }
 
-  getName() { return `${this.firstName} ${this.lastName}`; }
-  getAge() { return this.age; }
-  increaseAge(amount) { this.age += amount; }
+  getName() {
+    return `${this.firstName} ${this.lastName}`;
+  }
+  getAge() {
+    return this.age;
+  }
+  increaseAge(amount) {
+    this.age += amount;
+  }
 }
 
 const me = new Person("Matthijs", "Groen", 37);
@@ -153,9 +159,11 @@ fmap :: (a -> b) -> f a -> f b
 yep.
 
 A colleague pointed me to
-["Functors, applicatives and monads in pictures"](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html)
-It started to make sense to me only after opening the browser console and
-started typing JavaScript to try to follow along.
+["Functors, applicatives and monads in pictures"](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html).
+By just reading the article it was hard to make something out of it. It started
+to make sense to me only after I opened the browser console and started typing
+JavaScript to try and follow along. Learning by doing works better than reading
+alone.
 
 > [Opening the browser developer console](https://support.monday.com/hc/en-us/articles/360002197259-How-to-Open-the-Developer-Console-in-your-Browser)
 > for this series is also a great way to follow along what I am building 🙂
@@ -260,9 +268,9 @@ to do the challenge yourself, you can do so without spoilers.
 
 > Note:
 >
-> I originally did this challenge in the beginning of 2019. I revisited
-> this challenge again in 2020, and did a typescript implementation. (to
-> learn typescript as well 😄) It does not change the concepts used
-> here, but the implementation will slightly differ. When it makes
-> sense, typescript parts are included as well. (full typescript and
-> javascript implementations will be shared at the end of the series).
+> I originally did this challenge in the beginning of 2019. I revisited this
+> challenge again in 2020, and did a typescript implementation. (to learn
+> typescript as well 😄) It does not change the concepts used here, but the
+> implementation will slightly differ. When it makes sense, typescript parts are
+> included as well. (full typescript and javascript implementations will be
+> shared at the end of the series).

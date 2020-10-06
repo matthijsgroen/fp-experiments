@@ -83,7 +83,7 @@ Before:
 ```javascript
 class Person {
   constructor(firstName, lastName, age) {
-    super
+    super();
     this.firstName = firstName;
     this.lastName = lastName;
     this.age = age;
@@ -255,3 +255,12 @@ I never knew I would learn so much in a few days...
 In the upcoming posts I would like to take you along the journey I made into
 Functional Programming. This post deliberately ends here, so if you would like
 to do the challenge yourself, you can do so without spoilers.
+
+> Note:
+>
+> I originally did this challenge in the beginning of 2019. I revisited
+> this challenge again in 2020, and did a typescript implementation. (to
+> learn typescript as well 😄) It does not change the concepts used
+> here, but the implementation will slightly differ. When it makes
+> sense, typescript parts are included as well. (full typescript and
+> javascript implementations will be shared at the end of the series).

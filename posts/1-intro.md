@@ -134,7 +134,9 @@ There are more benefits:
   function to change the data.
 - Since this relation of input and output is so strict, you can cache processes
   better, skipping performance heavy steps.
-- Reusability is very, very high.
+- Reusability is very, very high. Functions have less responsibilities, are
+  generalizing data patterns and allow for great composition into larger
+  solutions.
 
 So I wanted to learn more about these concepts, and practise them. I wanted to
 understand all "the fuss".

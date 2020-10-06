@@ -7,6 +7,7 @@
   "devDependencies": {
     "eslint": "^5.15.1",
     "eslint-plugin-fp-challenge": "^1.0.1-alpha.2",
+    "prettier": "^2.1.2",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2"
   },
@@ -19,7 +20,9 @@
       "ecmaVersion": 2018
     },
     "extends": "eslint:recommended",
-    "plugins": ["fp-challenge"],
+    "plugins": [
+      "fp-challenge"
+    ],
     "env": {},
     "globals": {
       "Symbol": "readonly",
@@ -34,10 +37,27 @@
       "no-use-before-define": "error",
       "no-eval": "error",
       "no-implied-eval": "error",
-      "no-restricted-globals": ["error", "JSON"],
-      "max-statements": ["error", 1, { "ignoreTopLevelFunctions": false }],
-      "complexity": ["error", { "max": 3 }],
-      "arrow-body-style": ["error", "as-needed"],
+      "no-restricted-globals": [
+        "error",
+        "JSON"
+      ],
+      "max-statements": [
+        "error",
+        1,
+        {
+          "ignoreTopLevelFunctions": false
+        }
+      ],
+      "complexity": [
+        "error",
+        {
+          "max": 3
+        }
+      ],
+      "arrow-body-style": [
+        "error",
+        "as-needed"
+      ],
       "no-restricted-syntax": [
         "error",
         {

@@ -60,6 +60,15 @@ describe("reduceWithStart", () => {
       expect(result).toEqual(15);
     });
   });
+
+  describe("converting a to b", () => {
+    it("returns converted result", () => {
+      const result = reduceWithStart((acc: number) => (current: string) =>
+        acc + current.length
+      )(0)(["a", "bb", "ccc"]);
+      expect(result).toEqual(6);
+    });
+  });
 });
 
 describe("concat", () => {

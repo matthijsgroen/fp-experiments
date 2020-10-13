@@ -58,7 +58,13 @@ export const resultParser = <A>(value: A): Parser<A> => input => ({
   rest: input
 });
 
+export const opt = (parser: Parser<string>) => orElse(parser)(resultParser(""));
 export const choice = reduce(orElse);
+export const chain = reduce(
+  (previous: Parser<string>) => (current: Parser<string>) =>
+    toString(andThen(previous)(current))
+);
+
 export const anyOf = (x: string[]): Parser<string> =>
   choice(map(charParser)(x));
 
@@ -70,14 +76,17 @@ export const mapResult = <A, B>(transform: (input: A) => B) => (
     rest: result.rest
   }));
 
+const toList = mapResult(<T>(x: [T[], T[]]) => concat(x[0])(x[1]));
+
 export const many = <T>(p: Parser<T>): Parser<T[]> =>
   Y<InputStream, ParseResult<T[]>>(f => stream =>
-    orElse(
-      mapResult((x: [T[], T[]]) => concat(x[0])(x[1]))(
-        andThen(mapResult((e: T) => [e])(p))(f)
-      )
-    )(resultParser([] as T[]))(stream)
+    orElse(toList(andThen(mapResult((e: T) => [e])(p))(f)))(
+      resultParser([] as T[])
+    )(stream)
   );
+
+export const some = <T>(parser: Parser<T>) =>
+  toList(andThen(mapResult((e: T) => [e])(parser))(many(parser)));
 
 export const mergeStringResult = mapResult<string[], string>(a =>
   reduce((a: string) => b => a + b)(a)

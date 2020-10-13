@@ -9,21 +9,21 @@ export const map = <A, B>(transform: (input: A) => B): ((list: A[]) => B[]) =>
     head ? [transform(head), ...f(tail)] : []
   );
 
-type Reducer<T> = (previous: T) => (current: T) => T;
+type Reducer<A, B> = (previous: A) => (current: B) => A;
 
-const applyReduce = <T>(
-  reducer: Reducer<T>
-): PointFix<T, (list: T[]) => T> => f => acc => ([head, ...tail]): T =>
+const applyReduce = <A, B>(
+  reducer: Reducer<A, B>
+): PointFix<A, (list: B[]) => A> => f => acc => ([head, ...tail]): A =>
   head ? f(reducer(acc)(head))(tail) : acc;
 
-export const reduce = <T>(reducer: Reducer<T>): ((list: T[]) => T) => ([
+export const reduce = <T>(reducer: Reducer<T, T>): ((list: T[]) => T) => ([
   head,
   ...tail
 ]) => Y(applyReduce(reducer))(head)(tail);
 
-export const reduceWithStart = <T>(
-  reducer: Reducer<T>
-): ((start: T) => (list: T[]) => T) => Y(applyReduce(reducer));
+export const reduceWithStart = <A, B>(
+  reducer: Reducer<A, B>
+): ((start: A) => (list: B[]) => A) => Y(applyReduce(reducer));
 
 export const concat = <T>(list1: T[]) => (list2: T[]): T[] => [
   ...list1,

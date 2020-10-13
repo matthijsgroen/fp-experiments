@@ -1,116 +1,61 @@
-import Y from "./y";
-import { map, reduceWithStart } from "./utils";
-import { Parser, parse, satisfy, ParseResult, InputStream } from "./parser";
-import {
-  addLabel,
-  andThen,
-  andThenLeft,
-  andThenRight,
-  anyOf,
-  between,
-  charParser,
-  choice,
-  many,
-  mapResult,
-  orElse,
-  sepBy,
-  stringParser,
-  toString,
-  valueResult
-} from "./combinators";
+import { parseJSON, get } from "./jsonParser";
 
-type JSONValue =
-  | null
-  | boolean
-  | string
-  | JSONValue[]
-  | { [key: string]: JSONValue };
+const data = `
+{
+  "name": "Functional programming challenge",
+  "goal": [
+    "create a function that takes one argument that is a path into this JSON struct",
+    "get(data)(\\"using.disallowed.0\\") should result in \\"Dependencies\\"",
+    "get(data)(\\"points.full-json\\") should result in 1000",
+    "get(data)(\\"jsonTypes.2\\") should result in false"
+  ],
+  "using": {
+    "allowed": [
+      "Only code in this file",
+      "Only functions that take one argument",
+      "Ternary operator true ? a : b"
+    ],
+    "disallowed": [
+      "Dependencies",
+      "Recursion to own function",
+      "JSON.parse",
+      "Usage of 'if'",
+      "Usage of for/while loops",
+      "Usage of functions before they are defined",
+      "Host object functions (.split, .map, .reduce, etc)",
+      "Multiple statements in a lambda"
+    ]
+  },
+  "hints": [
+    "Think about function composition and currying",
+    "Think about parser combinators",
+    "https://fsharpforfunandprofit.com/posts/understanding-parser-combinators/"
+  ],
+  "points": {
+    "not-trying": 0,
+    "started": 5,
+    "full-json": 1e3,
+    "without-recursion": 1e4
+  },
+  "jsonTypes": [null, true, false, -0.12]
+}
+`;
 
-type JSONObject = { [key: string]: JSONValue };
+/**
+ * So, not like this!
+ * no function usage of the host language
+ *
+ * const ast = JSON.parse(data);
+ * const get = ast => path =>
+ *   path.split(".").reduce((item, term) => item && item[term], ast);
+ * console.log(get(ast)("using.disallowed.0"));
+ *
+ */
 
-const whitespaceParser = many(anyOf([" ", "\n", "\t"]));
-const nullParser = valueResult(null)(stringParser("null"));
+const jsonStruct = parseJSON(data);
 
-const trueParser = valueResult(true)(stringParser("true"));
-const falseParser = valueResult(false)(stringParser("false"));
-const boolParser = addLabel("boolean")(orElse(trueParser)(falseParser));
-
-const stringCharParser = satisfy(c => c !== '"' && c !== "\\");
-const specialCharacters: [string, string][] = [
-  ['\\"', '"'],
-  ["\\\\", "\\"],
-  ["\\/", "/"],
-  ["\\b", "\b"],
-  ["\\f", "\f"],
-  ["\\n", "\n"],
-  ["\\r", "\r"],
-  ["\\t", "\t"]
-];
-const escapedCharParser = choice(
-  map(([match, result]: [string, string]) =>
-    valueResult(result)(stringParser(match))
-  )(specialCharacters)
-);
-const quoteParser = charParser('"');
-const quotedStringParser = addLabel("string")(
-  toString(
-    between(quoteParser)(quoteParser)(
-      many(orElse(stringCharParser)(escapedCharParser))
-    )
-  )
-);
-
-const ignoreTrailingSpaces = <T>(parser: Parser<T>) =>
-  andThenLeft(parser)(whitespaceParser);
-
-const jsonChar = (character: string) =>
-  ignoreTrailingSpaces(charParser(character));
-
-const arrayStart = jsonChar("[");
-const arrayEnd = jsonChar("]");
-const arraySep = jsonChar(",");
-
-const arrayValues = <T>(valueParser: Parser<T>) =>
-  sepBy(arraySep)(ignoreTrailingSpaces(valueParser));
-
-const arrayParser = <A>(valueParser: Parser<A>) =>
-  addLabel("array")(between(arrayStart)(arrayEnd)(arrayValues(valueParser)));
-
-const objectStart = jsonChar("{");
-const objectEnd = jsonChar("}");
-const objectPairSep = jsonChar(",");
-const objectKeyValSep = jsonChar(":");
-const objectKey = ignoreTrailingSpaces(quotedStringParser);
-const objectKeyValue = (valueParser: Parser<JSONValue>) =>
-  mapResult(([key, value]: [string, JSONValue]) => ({ [key]: value }))(
-    andThen(andThenLeft(objectKey)(objectKeyValSep))(
-      ignoreTrailingSpaces(valueParser)
-    )
-  );
-
-const objectParser = (valueParser: Parser<JSONValue>) =>
-  mapResult(
-    reduceWithStart((result: JSONObject) => (current: JSONObject) => ({
-      ...result,
-      ...current
-    }))({} as JSONObject)
-  )(
-    between(objectStart)(objectEnd)(
-      sepBy(objectPairSep)(objectKeyValue(valueParser))
-    )
-  );
-
-const valueParser = Y<InputStream, ParseResult<JSONValue>>(f =>
-  choice([
-    nullParser,
-    boolParser,
-    quotedStringParser,
-    arrayParser(f),
-    objectParser(f)
-  ] as Parser<JSONValue>[])
-);
-
-export const parseJSON = parse(andThenRight(whitespaceParser)(valueParser));
+console.log(jsonStruct);
+console.log(get(jsonStruct)("using.disallowed.0"));
 
 // const example =
 //   '   ["hello, \\n \\"world\\"", { "foo": "var" }, null, true, [false]]';

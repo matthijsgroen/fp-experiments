@@ -19,7 +19,7 @@ Now that I added eslint, I could add custom rules, by updating my just generated
   "name": "json-parse-fp",
   "version": "1.0.0",
   "main": "index.js",
-  "author": "Matthijs Groen <matthijs@kabisa.nl>",
+  "author": "Matthijs Groen <matthijs.groen@kabisa.nl>",
   "license": "MIT",
   "devDependencies": {
     "eslint": "^5.15.1"
@@ -38,8 +38,7 @@ In eslint, you normally specify an `env` in which the code will be run, like a
 `browser`, `node` or `worker`. This will automatically allow a lot of syntax
 specific to such an environment. By not specifying an `env`, I was restricting a
 lot of standard JS. But in this case even too much. Type objects like `String`,
-`Array` and `Number` were also disabled, and `console.log` was also not
-allowed.
+`Array` and `Number` were also disabled, and `console.log` was also not allowed.
 
 (normally having no `console.log` is a good thing, it prevents debug or other
 info from remaining in your code when it is no longer needed).

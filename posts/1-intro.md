@@ -191,7 +191,7 @@ const data = `
   "name": "Functional programming challenge",
   "goal": [
     "create a function that takes one argument that is a path into this JSON struct",
-    "get(data)(\\"using.disallowed.0\\") should result in \\"No dependencies\\"",
+    "get(data)(\\"using.disallowed.0\\") should result in \\"Dependencies\\"",
     "get(data)(\\"points.full-json\\") should result in 1000",
     "get(data)(\\"jsonTypes.2\\") should result in false"
   ],
@@ -207,6 +207,7 @@ const data = `
       "JSON.parse",
       "Usage of 'if'",
       "Usage of for/while loops",
+      "Usage of functions before they are defined",
       "Host object functions (.split, .map, .reduce, etc)",
       "Multiple statements in a lambda"
     ]

@@ -7,7 +7,7 @@ import {
   ParseResult,
   InputStream,
   isParseError,
-  toInputStream,
+  toInputStream
 } from "./parser";
 import {
   addLabel,
@@ -21,14 +21,13 @@ import {
   choice,
   many,
   mapResult,
-  onError,
   opt,
   orElse,
   sepBy,
   some,
   stringParser,
   toString,
-  valueResult,
+  valueResult
 } from "./combinators";
 
 type JSONValue =
@@ -48,7 +47,7 @@ const trueParser = valueResult(true)(stringParser("true"));
 const falseParser = valueResult(false)(stringParser("false"));
 const boolParser = addLabel("boolean")(orElse(trueParser)(falseParser));
 
-const stringCharParser = satisfy((c) => c !== '"' && c !== "\\");
+const stringCharParser = satisfy(c => c !== '"' && c !== "\\");
 const specialCharacters: [string, string][] = [
   ['\\"', '"'],
   ["\\\\", "\\"],
@@ -57,7 +56,7 @@ const specialCharacters: [string, string][] = [
   ["\\f", "\f"],
   ["\\n", "\n"],
   ["\\r", "\r"],
-  ["\\t", "\t"],
+  ["\\t", "\t"]
 ];
 const escapedCharParser = choice(
   map(([match, result]: [string, string]) =>
@@ -86,7 +85,7 @@ const intPart = orElse(nonZeroInt)(zero);
 const fractionPart = toString(andThen(point)(toString(some(digit))));
 const exponentPart = chain([e, optPlusMinus, toString(some(digit))]);
 const numberParser = addLabel("number")(
-  mapResult((result) => Number(result))(
+  mapResult(result => Number(result))(
     chain([optSign, intPart, opt(fractionPart), opt(exponentPart)])
   )
 );
@@ -123,7 +122,7 @@ const objectParser = (valueParser: Parser<JSONValue>) =>
   mapResult(
     reduceWithStart((result: JSONObject) => (current: JSONObject) => ({
       ...result,
-      ...current,
+      ...current
     }))({} as JSONObject)
   )(
     between(objectStart)(objectEnd)(
@@ -131,21 +130,21 @@ const objectParser = (valueParser: Parser<JSONValue>) =>
     )
   );
 
-const valueParser = Y<InputStream, ParseResult<JSONValue>>((f) =>
+const valueParser = Y<InputStream, ParseResult<JSONValue>>(f =>
   choice([
     nullParser,
     boolParser,
     quotedStringParser,
     numberParser,
     arrayParser(f),
-    objectParser(f),
+    objectParser(f)
   ] as Parser<JSONValue>[])
 );
 
 export const parseJSON = parse(andThenRight(whitespaceParser)(valueParser));
 
 // Get function
-const pathCharParser = toString(some(satisfy((c) => c !== ".")));
+const pathCharParser = toString(some(satisfy(c => c !== ".")));
 const split = sepBy(charParser("."))(pathCharParser);
 
 const ensure = <A>(result: ParseResult<A>) => (defaultValue: A) =>
@@ -154,8 +153,10 @@ const ensure = <A>(result: ParseResult<A>) => (defaultValue: A) =>
 const splitPath = (path: string): string[] =>
   ensure(split(toInputStream(path)))([] as string[]);
 
-export const get = (data: JSONValue) => (path: string) =>
-  reduceWithStart((previous: JSONValue) => (current: string) => previous)(data)(
-  splitPath(path))
-//reduceWithStart((previous: JSONValue)=> (current: string) => previous && previous[current] )(data)(
+const isJSONObject = (result: unknown): result is JSONObject =>
+  typeof result === "object";
 
+export const get = (data: JSONValue) => (path: string): JSONValue =>
+  reduceWithStart((previous: JSONValue) => (current: string) =>
+    isJSONObject(previous) ? previous[current] : null
+  )(data)(splitPath(path));

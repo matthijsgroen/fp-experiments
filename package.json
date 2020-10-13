@@ -6,8 +6,11 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^26.0.14",
-    "eslint": "^5.15.1",
+    "@typescript-eslint/eslint-plugin": "^4.1.0",
+    "@typescript-eslint/parser": "^4.1.0",
+    "eslint": "^7.8.1",
     "eslint-plugin-fp-challenge": "^1.0.1-alpha.2",
+    "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.5.3",
     "prettier": "^2.1.2",
     "ts-jest": "^26.4.1",
@@ -17,82 +20,63 @@
   "scripts": {
     "start": "node javascript/challenge.js",
     "start:ts": "ts-node typescript/index.ts",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint --ext .ts typescript/"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node"
   },
+  "prettier": {
+    "arrowParens": "avoid",
+    "trailingComma": "none"
+  },
   "eslintConfig": {
-    "parserOptions": {
-      "ecmaVersion": 2018
+    "env": {
+      "browser": true,
+      "es2021": true
     },
-    "extends": "eslint:recommended",
-    "plugins": [
-      "fp-challenge"
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:fp-challenge/recommended"
     ],
-    "env": {},
-    "globals": {
-      "Symbol": "readonly",
-      "Array": "readonly",
-      "String": "readonly",
-      "Number": "readonly",
-      "console": "readonly"
+    "parserOptions": {
+      "ecmaVersion": 12,
+      "sourceType": "module",
+      "project": "./tsconfig.json"
     },
+    "plugins": [
+      "@typescript-eslint",
+      "fp-challenge",
+      "prettier"
+    ],
     "rules": {
-      "fp-challenge/no-self-reference": "error",
-      "no-console": "off",
-      "no-use-before-define": "error",
-      "no-eval": "error",
-      "no-implied-eval": "error",
-      "no-restricted-globals": [
+      "prettier/prettier": "error",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unsafe-assignment": "error",
+      "@typescript-eslint/no-unsafe-return": "error",
+      "fp-challenge/no-calling-object-members": [
         "error",
-        "JSON"
-      ],
-      "max-statements": [
-        "error",
-        1,
+        "always",
         {
-          "ignoreTopLevelFunctions": false
-        }
-      ],
-      "complexity": [
-        "error",
-        {
-          "max": 3
-        }
-      ],
-      "arrow-body-style": [
-        "error",
-        "as-needed"
-      ],
-      "no-restricted-syntax": [
-        "error",
-        {
-          "selector": "FunctionExpression",
-          "message": "Please use Lambda notation () =>"
-        },
-        {
-          "selector": "IfStatement",
-          "message": "Try using ternary operator: true ? 1 : 2"
-        },
-        {
-          "selector": "VariableDeclaration[kind=let],VariableDeclaration[kind=var]",
-          "message": "Only use constants"
-        },
-        {
-          "selector": "ArrowFunctionExpression[params.length > 1]",
-          "message": "Only 1 argument allowed. Please use currying"
-        },
-        {
-          "selector": "AssignmentPattern,AssignmentExpression",
-          "message": "State must be immutable"
-        },
-        {
-          "selector": "CallExpression[callee.type=MemberExpression][callee.property.name!='log']",
-          "message": "Not allowed to call object members, except console.log()"
+          "ignore": [
+            "console.log"
+          ]
         }
       ]
-    }
+    },
+    "overrides": [
+      {
+        "files": [
+          "*.spec.ts"
+        ],
+        "rules": {
+          "max-statements": "off",
+          "fp-challenge/no-calling-object-members": "off"
+        }
+      }
+    ]
   }
 }

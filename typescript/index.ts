@@ -56,7 +56,5 @@ const jsonStruct = parseJSON(data);
 
 console.log(jsonStruct);
 console.log(get(jsonStruct)("using.disallowed.0"));
-
-// const example =
-//   '   ["hello, \\n \\"world\\"", { "foo": "var" }, null, true, [false]]';
-// console.log(parseJSON(example));
+console.log(get(jsonStruct)("points.full-json"));
+console.log(get(jsonStruct)("jsonTypes.2"));

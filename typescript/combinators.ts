@@ -58,7 +58,18 @@ export const resultParser = <A>(value: A): Parser<A> => input => ({
   rest: input
 });
 
-export const opt = (parser: Parser<string>) => orElse(parser)(resultParser(""));
+export const mapResult = <A, B>(transform: (input: A) => B) => (
+  parser: Parser<A>
+) => (input: InputStream): ParseResult<B> =>
+  onSuccess(parser(input))(result => ({
+    value: transform(result.value),
+    rest: result.rest
+  }));
+
+const join = (a: string) => (b: string) => a + b;
+export const toString = mapResult(reduce(join));
+export const opt = (parser: Parser<string>): Parser<string> =>
+  orElse(parser)(resultParser(""));
 export const choice = reduce(orElse);
 export const chain = reduce(
   (previous: Parser<string>) => (current: Parser<string>) =>
@@ -67,14 +78,6 @@ export const chain = reduce(
 
 export const anyOf = (x: string[]): Parser<string> =>
   choice(map(charParser)(x));
-
-export const mapResult = <A, B>(transform: (input: A) => B) => (
-  parser: Parser<A>
-) => (input: InputStream): ParseResult<B> =>
-  onSuccess(parser(input))(result => ({
-    value: transform(result.value),
-    rest: result.rest
-  }));
 
 const toList = mapResult(<T>(x: [T[], T[]]) => concat(x[0])(x[1]));
 
@@ -85,7 +88,7 @@ export const many = <T>(p: Parser<T>): Parser<T[]> =>
     )(stream)
   );
 
-export const some = <T>(parser: Parser<T>) =>
+export const some = <T>(parser: Parser<T>): Parser<T[]> =>
   toList(andThen(mapResult((e: T) => [e])(parser))(many(parser)));
 
 export const mergeStringResult = mapResult<string[], string>(a =>
@@ -108,9 +111,6 @@ export const stringParser = (sequence: string): Parser<string> =>
       mergeStringResult(andThen(previous)(next))
     )(map(charParser)(toChars(sequence)))
   );
-
-const join = (a: string) => (b: string) => a + b;
-export const toString = mapResult(reduce(join));
 
 export const sepBy1 = <A>(sepParser: Parser<A>) => <B>(
   parser: Parser<B>
